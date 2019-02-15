@@ -1,5 +1,5 @@
 import { Controller, Get, UsePipes } from '@nestjs/common';
-import { AppService } from './app.service';
+import { AppService } from './service/app.service';
 import { Client, ClientProxy, MessagePattern } from '@nestjs/microservices';
 import { Observable, of, interval } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';

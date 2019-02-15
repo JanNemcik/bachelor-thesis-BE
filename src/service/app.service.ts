@@ -1,12 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { DataModel } from './data';
-import { MqttMessage, BroadcastDataDto } from './data/interfaces';
-import { createInstance } from './config';
+import { DataModel } from '../data';
+import { MqttMessage, BroadcastDataDto } from '../data/interfaces';
+import { createInstance } from '../config';
 import { of, from, throwError } from 'rxjs';
 import { mergeMap, catchError, map, tap } from 'rxjs/operators';
-import { GatewayService } from './main/service/gateway.service';
+import { GatewayService } from './gateway.service';
 
 @Injectable()
 export class AppService {

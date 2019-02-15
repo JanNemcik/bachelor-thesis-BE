@@ -10,8 +10,8 @@ async function bootstrap() {
     options: {
       servers: [
         {
-          // host: '192.168.56.101',
-          // port: 1883
+          //   host: '192.168.56.101',
+          //   port: 1883
           host: 'iot.itprof.sk',
           port: 1883
         }
