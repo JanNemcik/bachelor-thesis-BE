@@ -1,5 +1,17 @@
 import { Document } from 'mongoose';
+import { NodeDeviceTypeEnum, AirSensorQualityEnum } from '../interfaces';
 
 export interface DataModel extends Document {
-  [key: string]: any;
+  nodeId: number;
+  nodeType: NodeDeviceTypeEnum;
+  timestamp: Date;
+  gasLeak?: boolean;
+  temperature?: number;
+  humidity?: number;
+  smokeLeak?: boolean;
+  airQuality?: AirSensorQualityEnum;
+  lumen?: number;
+  fire?: boolean;
+  obstacle?: number;
+  movement?: Date[];
 }

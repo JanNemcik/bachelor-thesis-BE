@@ -1,18 +1,22 @@
 import { Schema } from 'mongoose';
+import * as _ from 'lodash';
+import { NodeDeviceTypeEnum, AirSensorQualityEnum } from '../interfaces';
 
 export const DataSchema = new Schema({
-  code: String,
-  subCode: String,
-  status: String,
-  description: String,
-  data: {
-    deviceId: String,
-    command: String,
-    data: Array,
-    createDate: Number,
-    nodeId: String,
-    sensorId: String,
-    cloudDate: Number
+  node_id: Number,
+  timestamp: { type: Date, default: Date.now },
+  node_type: { type: String, enum: _.keys(NodeDeviceTypeEnum) },
+  air_quality: {
+    type: String,
+    enum: _.keys(AirSensorQualityEnum),
+    required: false
   },
-  ok: Boolean
+  fire: { type: Boolean, required: false },
+  gas_leak: { type: Boolean, required: false },
+  humidity: { type: Number, required: false },
+  lumen: { type: Number, required: false },
+  movement: { type: [Date], required: false },
+  obstacle: { type: Number, required: false },
+  smoke_leak: { type: Boolean, required: false },
+  temperature: { type: Number, required: false }
 });

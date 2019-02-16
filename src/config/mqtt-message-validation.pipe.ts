@@ -3,16 +3,16 @@ import {
   has as isProhibited,
   sanitize as sanitizeQuery
 } from 'express-mongo-sanitize';
-import { MqttResponseType } from 'src/data/interfaces';
+import { MqttNodeConfigRequest } from 'src/admin/data';
 
 @Injectable()
-export class MqttMessageValidationPipe
-  implements PipeTransform<MqttResponseType> {
-  transform(data: any, metadata: ArgumentMetadata) {
+export class MqttMessageValidationPipe implements PipeTransform<any> {
+  transform(data: MqttNodeConfigRequest, metadata: ArgumentMetadata) {
     const containsInjections = isProhibited(data);
     if (containsInjections) {
       data = sanitizeQuery(data);
     }
+    console.log('data in pipe', data, metadata);
     // custom validation rules
     const copiedData =
       typeof data === 'object' ? JSON.stringify({ ...data }) : data;
