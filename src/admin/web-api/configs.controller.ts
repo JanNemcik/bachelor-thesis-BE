@@ -1,4 +1,4 @@
-import { Controller, UsePipes } from '@nestjs/common';
+import { Controller, UsePipes, Get } from '@nestjs/common';
 import { MessagePattern, Client, ClientProxy } from '@nestjs/microservices';
 import { ConfigsService } from '../service/configs.service';
 import { MqttMessageValidationPipe } from '../../config/mqtt-message-validation.pipe';
@@ -15,5 +15,10 @@ export class ConfigsController {
   @MessagePattern('datax')
   saveData(data: MqttResponseType) {
     console.log('data2', data);
+  }
+
+  @Get()
+  getAll() {
+    return this.configsService.getAllConfigs();
   }
 }

@@ -19,14 +19,11 @@ export class AppService {
     return of(createInstance<DataModel>(this.dataModel, data)).pipe(
       mergeMap(createdDocument => from(createdDocument.save())),
       // doing some transformation with the data and error handling
-      map<DataModel, BroadcastDataDto>(storedData => {
+      map(storedData => {
         if (!!!storedData) {
           throw new BadRequestException(`Data wasn't stored properly`);
         }
         return storedData;
-      }),
-      tap(broadcastData => {
-        this.gatewayService.brodcastData(broadcastData, 'update_data');
       }),
       catchError(err => throwError(err))
     );

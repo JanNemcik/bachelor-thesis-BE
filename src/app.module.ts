@@ -15,7 +15,7 @@ import { EventsGateway } from './config/events.gateway';
     AuthModule,
     MongooseModule.forRootAsync({
       useFactory: () => ({
-        uri: 'mongodb://localhost:27017/bachelorIoT'
+        uri: 'mongodb://iot.itprof.sk:27017/bachelor-iot'
       })
     }),
     AdminModule,
