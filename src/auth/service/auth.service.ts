@@ -13,7 +13,7 @@ import { map, tap, mergeMap, catchError } from 'rxjs/operators';
 import { hash, genSalt, compare } from 'bcrypt';
 import { AuthenticationDataDto, AuthModel, JwtTokenModel } from '../data';
 import { JsonWebTokenError } from 'jsonwebtoken';
-import { createInstance } from 'src/config';
+import { createInstance } from 'src/shared';
 
 @Injectable()
 export class AuthService {

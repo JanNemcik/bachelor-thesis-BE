@@ -16,11 +16,14 @@ export class MqttMessageValidationPipe implements PipeTransform<any> {
     // custom validation rules
     const copiedData =
       typeof data === 'object' ? JSON.stringify({ ...data }) : data;
-    const match = copiedData.match('afoj');
+
+    const match = copiedData.match('nieco');
+
     if ((match && match.length) || containsInjections) {
       console.log('attacker');
       return null;
     }
+
     return data;
   }
 }

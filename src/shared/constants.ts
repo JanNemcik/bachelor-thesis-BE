@@ -5,7 +5,7 @@ export const MQTT_CLIENT_OPTIONS: ClientOptions = {
   options: {
     servers: [
       {
-        host: '192.168.56.101',
+        host: 'iot.itprof.sk',
         port: 1883
       }
     ],

@@ -6,15 +6,17 @@ import {
   Body,
   HttpCode,
   Delete,
-  Param
+  Param,
+  Req,
+  Query
 } from '@nestjs/common';
 import { MessagePattern, Client, ClientProxy } from '@nestjs/microservices';
 import { ConfigsService } from '../service/configs.service';
 import { MqttMessageValidationPipe } from '../../config/mqtt-message-validation.pipe';
-import { MQTT_CLIENT_OPTIONS } from 'src/config';
 import { MqttNodeConfigRequest, MqttNodeConfig } from '../data';
 import { Observable } from 'rxjs';
 import { PatternEnum, NodeDeviceTypeEnum } from 'src/data/interfaces';
+import { MQTT_CLIENT_OPTIONS } from 'src/shared';
 
 @Controller('config')
 export class ConfigsController {
@@ -42,6 +44,11 @@ export class ConfigsController {
     return this.client.send(pattern, config);
   }
 
+  @Get('')
+  get() {
+    return 'ssdsddsd';
+  }
+
   @Patch('store')
   @HttpCode(200)
   storeConfig(@Body() config: MqttNodeConfigRequest) {
@@ -60,15 +67,15 @@ export class ConfigsController {
     return this.configsService.patchConfig(config);
   }
 
-  @Delete('delete/:id')
+  @Delete('delete/:type')
   @HttpCode(200)
-  deleteConfig(@Param('id') nodeId: number) {
-    return this.configsService.deleteConfig(nodeId);
+  deleteConfig(@Param('type') nodeType: NodeDeviceTypeEnum) {
+    return this.configsService.deleteConfig(nodeType);
   }
 
-  @Get('')
+  @Get('collection')
   @HttpCode(200)
-  getAllConfigs(@Param('type') type: NodeDeviceTypeEnum) {
+  getAllConfigs(@Query('type') type: NodeDeviceTypeEnum) {
     return this.configsService.getAllConfigs(type);
   }
 

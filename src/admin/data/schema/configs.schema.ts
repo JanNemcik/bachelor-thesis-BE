@@ -1,5 +1,8 @@
 import { Schema } from 'mongoose';
 
 export const ConfigsSchema = new Schema({
-  createdAt: Date
+  node_id: String,
+  created_at: Date,
+  interval: Number,
+  node_type: String
 });
