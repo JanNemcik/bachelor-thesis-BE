@@ -15,7 +15,7 @@ import { AuthController } from './web-api/auth.controller';
     JwtModule.register({
       secretOrPrivateKey: 'secretKey',
       signOptions: {
-        expiresIn: 60
+        expiresIn: 3600
       }
     }),
     PassportModule.register({ defaultStrategy: 'jwt' })

@@ -42,7 +42,7 @@ export class ConfigsService {
 
   /**
    * Gets all configs for requested node type
-   * @param type node type
+   * @param nodeType node type
    */
   getAllConfigs(nodeType: NodeDeviceTypeEnum): Observable<any[] | any> {
     return from(

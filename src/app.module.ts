@@ -9,7 +9,9 @@ import { AdminModule } from './admin/admin.module';
 import { MainModule } from './main/main.module';
 import { GatewayService } from './service/gateway.service';
 import { EventsGateway } from './config/events.gateway';
+import mongoose = require('mongoose');
 
+mongoose.set('debug', true);
 @Module({
   imports: [
     AuthModule,
