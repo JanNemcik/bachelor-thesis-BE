@@ -12,7 +12,8 @@ before_deploy:
 
 install:
   - echo '|1|aMH11cHKiwXNtaTBO3JEjfEae+M=|6TVccs/YdzkGJmU9LuQjNvlEQ2Y= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBIG6bXHFzmB1IxdXa3Nbvy0Xjg0h3DXZA8yuBQKuKu/KGZVAaWYb9CvLt0A7KH7hT3nzT5ZZZsKZNy23rBKm7+8=' >> $HOME/.ssh/known_hosts
-
+  - npm ci
+ 
 before_install:
 - sudo apt-get install -y build-essential python
 - npm install -g node-gyp node-pre-gyp
