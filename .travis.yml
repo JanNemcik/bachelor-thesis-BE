@@ -16,7 +16,7 @@ before_install:
 
 before_deploy:
   script:
-  - echo -e "Host \*\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+  - echo -e "Host 46.101.209.6\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
 
 deploy:
   provider: script
