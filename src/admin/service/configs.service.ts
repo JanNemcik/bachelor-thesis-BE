@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ConfigsModel, MqttNodeConfigRequest, MqttNodeConfig } from '../data';
-import { NodeDeviceTypeEnum } from 'src/data/interfaces';
+import { NodeDeviceTypeEnum } from '../../data/interfaces';
 import { from, Observable } from 'rxjs';
 import * as _ from 'lodash';
 import { take } from 'rxjs/operators';
-import { transformFromSchemaToModel } from 'src/shared/pipeables';
+import { transformFromSchemaToModel } from '../../shared/pipeables';
 
 @Injectable()
 export class ConfigsService {

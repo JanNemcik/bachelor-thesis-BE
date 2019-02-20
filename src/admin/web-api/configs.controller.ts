@@ -15,8 +15,8 @@ import { ConfigsService } from '../service/configs.service';
 import { MqttMessageValidationPipe } from '../../config/mqtt-message-validation.pipe';
 import { MqttNodeConfigRequest, MqttNodeConfig } from '../data';
 import { Observable } from 'rxjs';
-import { PatternEnum, NodeDeviceTypeEnum } from 'src/data/interfaces';
-import { MQTT_CLIENT_OPTIONS } from 'src/shared';
+import { PatternEnum, NodeDeviceTypeEnum } from '../../data/interfaces';
+import { MQTT_CLIENT_OPTIONS } from '../../shared';
 
 @Controller('config')
 export class ConfigsController {

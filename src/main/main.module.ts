@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { DataSchema } from 'src/data';
-import { EventsGateway } from 'src/config/events.gateway';
+import { DataSchema } from '../data';
 
 @Module({
   imports: [

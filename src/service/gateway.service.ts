@@ -1,5 +1,5 @@
+import { EventsGateway } from '../config/events.gateway';
 import { Injectable } from '@nestjs/common';
-import { EventsGateway } from 'src/config/events.gateway';
 
 /**
  * Provides operations to gateway socket
