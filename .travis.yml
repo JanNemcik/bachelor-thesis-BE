@@ -15,6 +15,7 @@ before_deploy:
 before_install:
 - sudo apt-get install -y build-essential python
 - npm install -g node-gyp node-pre-gyp
+- ls
 
 deploy:
   provider: script
