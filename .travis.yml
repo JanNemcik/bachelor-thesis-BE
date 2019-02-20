@@ -20,6 +20,6 @@ before_install:
 deploy:
   provider: script
   skip_cleanup: true
-  script: sudo rsync -r --delete-after --quiet $TRAVIS_BUILD_DIR/dist deploy@iot.itprof.sk:/var/www/iot-be
+  script: sudo rsync -r --delete-after --quiet $TRAVIS_BUILD_DIR/dist deploy@46.101.209.6:/var/www/iot-be
   on:
     branch: dev
