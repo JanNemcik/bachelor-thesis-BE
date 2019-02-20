@@ -20,4 +20,4 @@ deploy:
   skip_cleanup: true
   script: rsync -r --delete-after --quiet $TRAVIS_BUILD_DIR/dist deploy@46.101.209.6:var/www/iot-be
   on:
-    branch: master
+    branch: dev
