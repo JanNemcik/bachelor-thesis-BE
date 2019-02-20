@@ -2,10 +2,6 @@ language: node_js
 node_js:
 - '8'
 
-addons:
-  ssh_known_hosts: 
-    - iot.itprof.sk
-
 script: npm run prestart:prod
 
 before_deploy:
