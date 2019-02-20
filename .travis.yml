@@ -12,18 +12,11 @@ after_success:
   - eval "$(ssh-agent -s)"
   - chmod 600 /tmp/deploy_rsa
   - ssh-add /tmp/deploy_rsa
-  - ls
 
 before_install:
   - sudo apt-get install -y build-essential python
   - npm install -g node-gyp node-pre-gyp
 
-#deploy:
- # provider: script
-  #skip_cleanup: true
-  #script: bash deploy.sh
-  #on:
-   # branch: dev
 deploy:
   provider: script
   skip_cleanup: true
