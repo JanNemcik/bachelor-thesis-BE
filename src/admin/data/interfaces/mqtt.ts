@@ -1,4 +1,4 @@
-import { NodeConfig } from 'src/data/interfaces';
+import { NodeConfig } from '../../../data/interfaces';
 
 interface MqttNodeConfig extends NodeConfig {
   /**
