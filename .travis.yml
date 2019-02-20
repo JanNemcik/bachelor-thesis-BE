@@ -9,7 +9,7 @@ before_deploy:
 - eval "$(ssh-agent -s)"
 - chmod 600 /tmp/deploy_rsa
 - ssh-add /tmp/deploy_rsa
-- ssh deploy@46.101.209.6 -y
+- ssh deploy@46.101.209.6 | echo "yes"
 
  
 before_install:
@@ -19,6 +19,6 @@ before_install:
 deploy:
   provider: script
   skip_cleanup: true
-  script: rsync -r --delete-after --quiet $TRAVIS_BUILD_DIR/dist deploy@46.101.209.6:~/iot-be
+  script: rsync -r --delete-after --quiet $TRAVIS_BUILD_DIR/dist deploy@46.101.209.6:~/iot-be | echo "yes"
   on:
     branch: dev
