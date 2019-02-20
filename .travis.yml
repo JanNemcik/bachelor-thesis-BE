@@ -5,6 +5,8 @@ node_js:
 addons:
   ssh_known_hosts: 46.101.209.6
 
+script: npm run prestart:prod
+
 before_deploy:
 - openssl aes-256-cbc -K $encrypted_a713e34b192a_key -iv $encrypted_a713e34b192a_iv -in deploy_rsa.enc -out /tmp/deploy_rsa -d
 - eval "$(ssh-agent -s)"
@@ -18,6 +20,6 @@ before_install:
 deploy:
   provider: script
   skip_cleanup: true
-  script: rsync -r --delete-after --quiet $TRAVIS_BUILD_DIR/dist deploy@46.101.209.6:var/www/iot-be
+  script: rsync -r --delete-after --quiet $TRAVIS_BUILD_DIR/dist deploy@46.101.209.6:/var/www/iot-be
   on:
     branch: dev
