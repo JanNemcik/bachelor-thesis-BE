@@ -9,7 +9,9 @@ before_deploy:
 - eval "$(ssh-agent -s)"
 - chmod 600 /tmp/deploy_rsa
 - ssh-add /tmp/deploy_rsa
-- echo -e "Host 46.101.209.6\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+
+install:
+  - echo '|1|aMH11cHKiwXNtaTBO3JEjfEae+M=|6TVccs/YdzkGJmU9LuQjNvlEQ2Y= ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBIG6bXHFzmB1IxdXa3Nbvy0Xjg0h3DXZA8yuBQKuKu/KGZVAaWYb9CvLt0A7KH7hT3nzT5ZZZsKZNy23rBKm7+8=' >> $HOME/.ssh/known_hosts
 
 before_install:
 - sudo apt-get install -y build-essential python
