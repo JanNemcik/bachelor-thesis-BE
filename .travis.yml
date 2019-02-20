@@ -3,7 +3,9 @@ node_js:
   - '8'
 
 addons:
-  ssh_known_hosts: deploy@46.101.209.6
+  ssh_known_hosts:
+    - deploy@46.101.209.6
+    - deploy@iot.itprof.sk
 
 script: npm run prestart:deploy
 
