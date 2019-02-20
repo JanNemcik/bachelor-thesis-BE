@@ -4,7 +4,7 @@ node_js:
 
 addons:
   ssh_known_hosts: deploy@46.101.209.6
- 
+
 script: npm run prestart:prod
 
 after_success:
@@ -20,6 +20,6 @@ before_install:
 deploy:
   provider: script
   skip_cleanup: true
-  script: rsync -r --delete-after $TRAVIS_BUILD_DIR/dist deploy@46.101.209.6:dist
+  script: bash deploy.sh
   on:
     branch: dev

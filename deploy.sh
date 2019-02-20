@@ -1,4 +1,8 @@
 #!/bash/bin
 
-ssh -oStrictHostKeyChecking=no deploy@46.101.209.6 | ls | whoami
-//rsync -r --delete-after /dist deploy@46.101.209.6:/var/www/iot-be 
+echo "transfer started..."
+rsync -r --no-implied-dirs --delete-after $TRAVIS_BUILD_DIR/dist deploy@46.101.209.6:dist
+echo "content transfered"
+ls -la
+whoami
+
