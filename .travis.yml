@@ -1,25 +1,23 @@
 language: node_js
 node_js:
-- '8'
+  - '8'
 
 script: npm run prestart:prod
 
 after_success:
-- openssl aes-256-cbc -K $encrypted_a713e34b192a_key -iv $encrypted_a713e34b192a_iv -in deploy_rsa.enc -out /tmp/deploy_rsa -d
-- eval "$(ssh-agent -s)"
-- chmod 600 /tmp/deploy_rsa
-- ssh-add /tmp/deploy_rsa
-- ls
- 
+  - openssl aes-256-cbc -K $encrypted_a713e34b192a_key -iv $encrypted_a713e34b192a_iv -in deploy_rsa.enc -out /tmp/deploy_rsa -d
+  - eval "$(ssh-agent -s)"
+  - chmod 600 /tmp/deploy_rsa
+  - ssh-add /tmp/deploy_rsa
+  - ls
+
 before_install:
-- sudo apt-get install -y build-essential python
-- npm install -g node-gyp node-pre-gyp
+  - sudo apt-get install -y build-essential python
+  - npm install -g node-gyp node-pre-gyp
 
 deploy:
   provider: script
   skip_cleanup: true
-  script: 
-   - ssh -oStrictHostKeyChecking=no deploy@46.101.209.6 
-   - rsync -r --delete-after /dist deploy@46.101.209.6:/var/www/iot-be 
+  script: bash deploy.sh
   on:
     branch: dev
