@@ -2,6 +2,9 @@ language: node_js
 node_js:
   - '8'
 
+addons:
+  ssh_known_hosts: deploy@46.101.209.6
+ 
 script: npm run prestart:prod
 
 after_success:
