@@ -9,7 +9,7 @@ export const MQTT_CLIENT_OPTIONS: ClientOptions = {
         port: 1883
       }
     ],
-    username: 'jany',
-    password: 'oHm2cti2'
+    username: 'bachelor',
+    password: 'iotbachelor'
   }
 };
