@@ -3,7 +3,7 @@ import {
   has as isProhibited,
   sanitize as sanitizeQuery
 } from 'express-mongo-sanitize';
-import { MqttNodeConfigRequest } from '../admin/data';
+import { MqttNodeConfigRequest } from 'src/data/interfaces';
 
 @Injectable()
 export class MqttMessageValidationPipe implements PipeTransform<any> {

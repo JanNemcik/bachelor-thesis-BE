@@ -1,5 +1,5 @@
 import { Document } from 'mongoose';
-import { MqttMessage } from 'src/admin/data';
+import { MqttMessage } from '../interfaces';
 
 export interface LogsModel extends Document {
   message: MqttMessage;
