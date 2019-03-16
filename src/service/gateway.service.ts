@@ -1,5 +1,9 @@
+import { HandshakeTypeEnum } from './../data/interfaces/enum/handshake.enum';
 import { EventsGateway } from '../config/events.gateway';
 import { Injectable } from '@nestjs/common';
+import { SHA256 } from 'crypto-js';
+import { MqttMessage } from '../admin/data';
+import { BehaviorSubject } from 'rxjs';
 
 /**
  * Provides operations to gateway socket

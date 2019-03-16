@@ -1,1 +1,2 @@
-export { DataModel } from './data.model';
+export * from './data.model';
+export * from './logs.model';

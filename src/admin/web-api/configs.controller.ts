@@ -16,11 +16,11 @@ import { MqttMessageValidationPipe } from '../../config/mqtt-message-validation.
 import { MqttNodeConfigRequest, MqttNodeConfig } from '../data';
 import { Observable } from 'rxjs';
 import { PatternEnum, NodeDeviceTypeEnum } from '../../data/interfaces';
-import { MQTT_CLIENT_OPTIONS } from '../../shared';
+import { MQTT_CLIENT_OPTIONS_PROD } from '../../shared';
 
 @Controller('config')
 export class ConfigsController {
-  @Client(MQTT_CLIENT_OPTIONS)
+  @Client(MQTT_CLIENT_OPTIONS_PROD)
   client: ClientProxy;
   constructor(private configsService: ConfigsService) {}
 
