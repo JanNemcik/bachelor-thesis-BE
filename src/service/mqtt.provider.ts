@@ -1,18 +1,17 @@
-import { MQTT_MESSAGE_PSK, MQTT_CLIENT_OPTIONS_DEV } from '../shared/constants';
-import { HandshakeTypeEnum } from '../data/interfaces/enum/handshake.enum';
+import { MQTT_CLIENT_OPTIONS_DEV } from '../shared/constants';
 import { Injectable } from '@nestjs/common';
-
 import mqtt = require('mqtt');
-import * as crypto_js from 'crypto-js';
 import * as _ from 'lodash';
 import {
   MqttMessage,
   MqttSignalingMessage,
   MqttResponse,
-  MqttData
+  MqttData,
+  HandshakeTypeEnum
 } from '../data/interfaces';
-import { Subject, from, of, pipe, BehaviorSubject } from 'rxjs';
-import { tap, filter, take, takeUntil } from 'rxjs/operators';
+import { pipe, BehaviorSubject } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { AppService } from './app.service';
 
 const date = new Date();
 
@@ -28,9 +27,19 @@ export class MqttProvider {
   private readonly _client: mqtt.MqttClient;
   // stores currently executing messages
   private syncMessageProcesses: Map<string, MqttData> = new Map();
-  private syncMessageProcesses$ = of(this.syncMessageProcesses);
+  private _syncMessageProcesses$ = new BehaviorSubject<
+    Array<{ hash: string; state: HandshakeTypeEnum }>
+  >([]);
+  private syncMessageProcessesValue: Array<{
+    hash: string;
+    state: HandshakeTypeEnum;
+  }>;
 
-  constructor() {
+  public get syncMessageProcesses$() {
+    return this._syncMessageProcesses$;
+  }
+
+  constructor(private appService: AppService) {
     console.info(
       '[MQTT Provider] - ',
       date.toLocaleDateString(),
@@ -46,28 +55,52 @@ export class MqttProvider {
     this._client.on('connect', () => {
       this.init();
     });
+    this.syncMessageProcessesValue = this._syncMessageProcesses$.value;
   }
 
+  /**
+   *
+   *
+   * @returns {mqtt.Client}
+   * @memberof MqttProvider
+   */
+  getClientProviderInstance(): mqtt.Client {
+    return this._client;
+  }
+
+  /**
+   * Checks the receiving availabilty of the network
+   */
+  startSyncProcess<T>(topic: string, data: T) {
+    // send {type: syn} to the network
+    return pipe(map(() => this.sendSyn(data, topic)));
+  }
+
+  /**
+   *
+   *
+   * @private
+   * @memberof MqttProvider
+   */
   private init() {
     this._client.subscribe('#').on('message', (topic, message) => {
       const receivedMessage = message.toString();
       // when a message arrives, do something with it
       const decryptedMessage = JSON.parse(
-        this.decryptMessage(receivedMessage)
+        this.appService.decryptMessage(receivedMessage)
       ) as MqttResponse;
 
       if (this.isSignalingMqttMessage(decryptedMessage)) {
         const { handshake } = decryptedMessage;
         switch (handshake) {
           case HandshakeTypeEnum.SYN_ACK:
-            const data = this.syncMessageProcesses.get(decryptedMessage.hash);
-            this.publishData(data, topic, decryptedMessage.hash);
+            this.handleIncomingSynAck(decryptedMessage.hash, topic);
             break;
           case HandshakeTypeEnum.SYN:
             this.confirmSyn(decryptedMessage as MqttSignalingMessage, topic);
             break;
           case HandshakeTypeEnum.ACK:
-            this.syncMessageProcesses.delete(decryptedMessage.hash);
+            this.handleIncomingAck(decryptedMessage.hash);
             break;
           default:
             // log error
@@ -87,8 +120,33 @@ export class MqttProvider {
     });
   }
 
-  getClientProviderInstance(): mqtt.Client {
-    return this._client;
+  /**
+   *
+   *
+   * @private
+   * @param {string} hash
+   * @memberof MqttProvider
+   */
+  private handleIncomingAck(hash: string) {
+    this.syncMessageProcesses.delete(hash);
+    // first emit to subscribers
+    this.changeState(hash, HandshakeTypeEnum.ACK);
+    // then remove without emiting
+    this.removeFromProcessedMessagesSubject(hash);
+  }
+
+  /**
+   *
+   *
+   * @private
+   * @param {string} hash
+   * @param {string} topic
+   * @memberof MqttProvider
+   */
+  private handleIncomingSynAck(hash: string, topic: string) {
+    this.changeState(hash, HandshakeTypeEnum.SYN_ACK);
+    const data = this.syncMessageProcesses.get(hash);
+    this.publishData(data, topic, hash);
   }
 
   /**
@@ -96,9 +154,9 @@ export class MqttProvider {
    * @param data
    * @param topic
    */
-  private sendSyn(data: any, topic: string): void {
+  private sendSyn<T = any>(data: T, topic: string): string {
     // creating match hash for data to be send
-    const hash = this.hash(data);
+    const hash = this.appService.createHashedId(data);
 
     const message: MqttSignalingMessage = {
       hash,
@@ -108,6 +166,11 @@ export class MqttProvider {
     this._client.publish(topic, JSON.stringify(message));
 
     this.syncMessageProcesses.set(hash, data);
+    this._syncMessageProcesses$.next([
+      ...this.syncMessageProcessesValue,
+      { hash, state: HandshakeTypeEnum.SYN }
+    ]);
+    return hash;
   }
 
   /**
@@ -118,6 +181,9 @@ export class MqttProvider {
   private acknowledge({ hash }: MqttMessage, topic: string) {
     const message = { hash, handshake: HandshakeTypeEnum.ACK };
     this._client.publish(topic, JSON.stringify(message));
+    this.syncMessageProcessesValue = this.syncMessageProcessesValue.filter(
+      val => val.hash !== hash
+    );
   }
 
   /**
@@ -126,11 +192,16 @@ export class MqttProvider {
    * @param topic
    */
   private confirmSyn({ hash }: MqttSignalingMessage, topic: string) {
+    // TODO: need to handle failure at network layer, if there is now ack confirmation of received data
+    this._syncMessageProcesses$.next([
+      ...this.syncMessageProcessesValue,
+      { hash, state: HandshakeTypeEnum.SYN_ACK }
+    ]);
     const toEncrypt = JSON.stringify({
       hash,
       handshake: HandshakeTypeEnum.SYN_ACK
     });
-    const encrypted = this.encryptMessage(toEncrypt);
+    const encrypted = this.appService.encryptMessage(toEncrypt);
     this._client.publish(topic, encrypted);
   }
 
@@ -169,59 +240,59 @@ export class MqttProvider {
   }
 
   /**
-   * Encrypts given message
-   * @param message
-   */
-  private encryptMessage(message: string): string {
-    return crypto_js.AES.encrypt(
-      message,
-      MQTT_MESSAGE_PSK,
-      crypto_js.TripleDES
-    ).toString();
-  }
-
-  /**
-   * Decryptes given message
-   * @param message
-   */
-  private decryptMessage(message: string): string {
-    return crypto_js.AES.decrypt(
-      message,
-      MQTT_MESSAGE_PSK,
-      crypto_js.TripleDES
-    ).toString(crypto_js.enc.Utf8);
-  }
-
-  /**
-   * Checks the receiving availabilty of the network
-   */
-  public startSyncProcess(topic: string, data: any) {
-    // send {type: syn} to the network
-    return pipe(tap(() => this.sendSyn(data, topic)));
-  }
-
-  /**
    * Publishes data to MQTT broker
    * @param data
    * @param topic
    */
   private publishData<T = any>(data: T, topic: string, hash: string): void {
-    const encrypted = this.encryptMessage(JSON.stringify(data));
+    const encrypted = this.appService.encryptMessage(JSON.stringify(data));
     const message: MqttMessage = {
       data: encrypted,
       handshake: HandshakeTypeEnum.DATA,
       hash
     };
     this._client.publish(topic, JSON.stringify(message));
+    this.changeState(hash, HandshakeTypeEnum.DATA);
   }
 
   /**
-   * Return hashed string of length 10
-   * @param toHash
+   *
+   *
+   * @private
+   * @param {string} toChange
+   * @param {HandshakeTypeEnum} newState
+   * @memberof MqttProvider
    */
-  private hash = (toHash): string =>
-    crypto_js
-      .SHA256(JSON.stringify(toHash))
-      .toString()
-      .substr(0, 10);
+  private changeState(toChange: string, newState: HandshakeTypeEnum) {
+    const newValue = this.syncMessageProcessesValue.filter(
+      ({ hash }) => hash !== toChange
+    );
+    this._syncMessageProcesses$.next([
+      ...newValue,
+      { hash: toChange, state: newState }
+    ]);
+  }
+
+  /**
+   *
+   *
+   * @private
+   * @param {string} toRemove
+   * @memberof MqttProvider
+   */
+  private removeFromProcessedMessagesSubject(toRemove: string) {
+    // we only want to remove without emiting to subsribes
+    this.syncMessageProcessesValue = this.syncMessageProcessesValue.filter(
+      ({ hash }) => hash !== toRemove
+    );
+  }
+
+  repeatSyncProcess(topic: string, hash: string) {
+    const message: MqttSignalingMessage = {
+      hash,
+      handshake: HandshakeTypeEnum.SYN
+    };
+
+    this._client.publish(topic, JSON.stringify(message));
+  }
 }

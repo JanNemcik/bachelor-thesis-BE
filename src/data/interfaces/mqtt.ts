@@ -1,5 +1,6 @@
 import { HandshakeTypeEnum } from './enum/handshake.enum';
 import { NodeConfig } from '.';
+import { LogModel } from '../model/log.model';
 
 interface MqttNodeConfig extends NodeConfig {
   /**
@@ -22,8 +23,13 @@ interface MqttMessageWrapper<T = any> {
   data: T;
   topic: string;
 }
+
 type MqttResponse = MqttMessage | MqttSignalingMessage;
 type MqttData = any;
+interface MqttLogManager {
+  doc: LogModel;
+  err?: string;
+}
 export {
   MqttNodeConfig,
   MqttNodeConfigRequest,
@@ -31,5 +37,6 @@ export {
   MqttMessageWrapper,
   MqttSignalingMessage,
   MqttResponse,
-  MqttData
+  MqttData,
+  MqttLogManager
 };

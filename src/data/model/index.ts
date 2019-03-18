@@ -1,2 +1,2 @@
 export * from './data.model';
-export * from './logs.model';
+export * from './log.model';

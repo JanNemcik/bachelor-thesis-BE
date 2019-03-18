@@ -1,85 +1,185 @@
-import { HandshakeTypeEnum } from './../data/interfaces/enum/handshake.enum';
 import { Injectable } from '@nestjs/common';
-import * as crypto_js from 'crypto-js';
-import { Observable, from, of, pipe } from 'rxjs';
+import { Observable, of, throwError, from, Subject, pipe, EMPTY } from 'rxjs';
 import * as _ from 'lodash';
 import {
-  tap,
   mergeMap,
-  skipWhile,
-  takeWhile,
-  takeUntil,
   map,
-  skipUntil
+  filter,
+  retry,
+  catchError,
+  timeout,
+  take,
+  mapTo
 } from 'rxjs/operators';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { LogsModel } from '../data';
-import { createInstance } from 'src/shared';
+import { LogModel } from '../data';
+import { storeToDB } from 'src/shared';
 import { MqttProvider } from './mqtt.provider';
-import { MqttMessage, MqttMessageWrapper } from '../data/interfaces';
+import {
+  MqttMessage,
+  HandshakeTypeEnum,
+  MqttLogManager
+} from '../data/interfaces';
+import { LogStateEnum, LogStatusEnum } from '../data/interfaces/enum/log.enum';
+import { AppService } from './app.service';
 
 @Injectable()
 export class MqttService {
   private messagesQueue = new Map<string, MqttMessage>();
+  /**
+   * @key topic: topic, to which are subsribers registred
+   * @value {
+   * @param {AppService.hash()} id
+   * @function fn: function to be executed
+   *        }
+   * @private
+   * @memberof MqttService
+   */
   private subscribers = new Map<
     string,
-    Array<{ id: number; fn: (message: any) => any }>
+    Array<{ id: string; fn: (message: any) => any }>
   >();
 
   constructor(
-    @InjectModel('LogsModel') private readonly logsModel: Model<LogsModel>,
-    private readonly mqttProvider: MqttProvider
+    @InjectModel('LogModel') private readonly logModel: Model<LogModel>,
+    private readonly mqttProvider: MqttProvider,
+    private appService: AppService
   ) {}
 
-  encryptMessage<T = any>(data: T, handShakeType: HandshakeTypeEnum): string {
-    const message = JSON.stringify({
-      data,
-      hash: crypto_js.SHA256(JSON.stringify(data)).toString(),
-      handshake: handShakeType
-    });
-
-    return;
-  }
-
   /**
-   * 
-   * @param topic 
-   * @param message 
+   *
+   * @param topic
+   * @param message
    */
-  publishMessage(topic: string, message: any): Observable<any> {
+  publishMessage<T = any>(topic: string, message: T): Observable<any> {
     // mqttProvider starts synchronization proccess with network and handles publishing of data to the network
-    return of(null).pipe(this.mqttProvider.startSyncProcess(topic, message));
+    let hash: string;
+
+    const synAckReceived = item =>
+      item.hash === hash && item.state === HandshakeTypeEnum.SYN_ACK;
+
+    const ackReceived = item =>
+      item.hash === hash && item.state === HandshakeTypeEnum.ACK;
+
+    const subject = (condition: (...args) => boolean) =>
+      this.mqttProvider.syncMessageProcesses$.pipe(
+        mergeMap(messages => from(messages)),
+        filter(value => condition(value))
+      );
+
+    return of(null).pipe(
+      this.mqttProvider.startSyncProcess<T>(topic, message),
+      // creates log record
+      map(createdHash => {
+        hash = createdHash;
+        return {
+          hash: createdHash,
+          topic,
+          state: LogStateEnum.PENDING,
+          status: LogStatusEnum.PUBLISHING
+        };
+      }),
+      // creating log with status pending
+      storeToDB<LogModel>(this.logModel),
+      // wait for syn-ack, every 2 seconds new attempt; after 3 attempts err;
+      this.retryPublishMechanism(subject(synAckReceived), subject(ackReceived))
+    );
   }
 
   private pushToMessages(message: MqttMessage) {
     this.messagesQueue.set(message.hash, message);
   }
 
-  private popFromMessages(message: MqttMessage, wasSuccessful: boolean) {
-    this.storeMessageLog(message, wasSuccessful).pipe(
-      tap(() => this.messagesQueue.delete(message.hash))
-    );
+  // private popFromMessages(message: MqttMessage, wasSuccessful: boolean) {
+  //   this.storeMessageLog(message, wasSuccessful).pipe(
+  //     tap(() => this.messagesQueue.delete(message.hash))
+  //   );
+  // }
+
+  // private storeMessageLog(message: MqttMessage, wasSuccessful: boolean) {
+  //   return pipe(
+  //     map(() =>
+  //       createInstance<LogModel>(this.logModel, { ...message, wasSuccessful })
+  //     ),
+  //     mergeMap(createdDocument => from(createdDocument.save()))
+  //   );
+  // }
+
+  registerSubsriber(
+    topic: string,
+    subscriber: { id: string; fn: (mess: any) => any }
+  ) {
+    const currentValue = this.subscribers.get(topic) || [];
+    this.subscribers.set(topic, [...currentValue, subscriber]);
   }
 
-  private storeMessageLog(
-    message: MqttMessage,
-    wasSuccessful: boolean
-  ): Observable<any> {
-    return of(
-      createInstance<LogsModel>(this.logsModel, { ...message, wasSuccessful })
-    ).pipe(mergeMap(createdDocument => from(createdDocument.save())));
-  }
-
-  registerSubsriber(topic, subscriber) {
-    this.subscribers.set(topic, subscriber);
-  }
-
-  unregisterSubscriber(topic: string, functionId: number) {
+  unregisterSubscriber(topic: string, functionId: string) {
     const topicSubscribers = this.subscribers.get(topic);
     const filteredSubscribers = topicSubscribers.filter(
       message => message.id !== functionId
     );
     this.subscribers.set(topic, filteredSubscribers);
+  }
+
+  /**
+   *
+   *
+   * @private
+   * @memberof MqttService
+   */
+  private retryPublishMechanism = (
+    obs1: Observable<any> | Subject<any>,
+    obs2: Observable<any> | Subject<any>
+  ) =>
+    pipe(
+      mergeMap((doc: LogModel) =>
+        obs1.pipe(
+          timeout(2000),
+          catchError(err => {
+            this.mqttProvider.repeatSyncProcess(doc.topic, doc.hash);
+            return throwError({ err, doc });
+          }),
+          retry(2),
+          take(1),
+          mapTo(doc)
+        )
+      ),
+      catchError((errorManager: MqttLogManager) =>
+        this.updateLog(errorManager, LogStateEnum.ERRORED)
+      ),
+      mergeMap((doc: LogModel) =>
+        obs2.pipe(
+          timeout(2000),
+          catchError(err => {
+            this.mqttProvider.repeatSyncProcess(doc.topic, doc.hash);
+            return throwError({ err, doc });
+          }),
+          retry(2),
+          take(1),
+          mergeMap(() => this.updateLog({ doc }, LogStateEnum.SUCCESSFUL)),
+          mapTo(LogStateEnum.SUCCESSFUL)
+        )
+      ),
+      catchError((errorManager: MqttLogManager) =>
+        this.updateLog(errorManager, LogStateEnum.ERRORED).pipe(
+          mapTo(LogStateEnum.ERRORED)
+        )
+      )
+    );
+
+  /**
+   *
+   *
+   * @private
+   * @param {LogModel} doc
+   * @param {LogStateEnum} state
+   * @returns
+   * @memberof MqttService
+   */
+  private updateLog({ err, doc }: MqttLogManager, state: LogStateEnum) {
+    doc.state = state;
+    doc.err = err;
+    return from(doc.save());
   }
 }

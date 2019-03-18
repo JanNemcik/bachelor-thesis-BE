@@ -11,7 +11,7 @@ import { GatewayService } from './service/gateway.service';
 import { EventsGateway } from './config/events.gateway';
 import mongoose = require('mongoose');
 import { DATABASE_OPTIONS_LOCAL } from './shared';
-import { LogsSchema } from './data';
+import { LOG_SCHEMA } from './data';
 import { MqttService } from './service/mqtt.service';
 import { MqttProvider } from './service/mqtt.provider';
 
@@ -21,7 +21,7 @@ mongoose.set('debug', true);
     AuthModule,
     MongooseModule.forRootAsync(DATABASE_OPTIONS_LOCAL),
     MongooseModule.forFeature([
-      { name: 'LogsModel', schema: LogsSchema, collection: 'logs' }
+      { name: 'LogsModel', schema: LOG_SCHEMA, collection: 'logs' }
     ]),
     AdminModule,
     MainModule
