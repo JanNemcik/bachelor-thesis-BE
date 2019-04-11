@@ -1,3 +1,4 @@
-import { DataSchema } from './data.schema';
+import { DATA_SCHEMA } from './data.schema';
+import { LOG_SCHEMA } from './logs.schema';
 
-export { DataSchema };
+export { DATA_SCHEMA, LOG_SCHEMA };

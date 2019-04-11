@@ -3,7 +3,7 @@ import {
   has as isProhibited,
   sanitize as sanitizeQuery
 } from 'express-mongo-sanitize';
-import { MqttNodeConfigRequest } from '../admin/data';
+import { MqttNodeConfigRequest } from 'src/data/interfaces';
 
 @Injectable()
 export class MqttMessageValidationPipe implements PipeTransform<any> {
@@ -15,7 +15,7 @@ export class MqttMessageValidationPipe implements PipeTransform<any> {
     console.log('data in pipe', data, metadata);
     // custom validation rules
     const copiedData =
-      typeof data === 'object' ? JSON.stringify({ ...data }) : data;
+      typeof data === 'object' ? JSON.stringify({ ...data }) : '' + data;
 
     const match = copiedData.match('nieco');
 
