@@ -63,7 +63,7 @@ export class AuthService {
    */
   validateUser(payload: AuthenticationDataDto): Promise<any> {
     const { name, password } = payload;
-    // TODO: prerobit na pormise
+    // TODO: prerobit na promise
     // this.authModel
     //   .findOne({ name })
     //   .exec()
@@ -73,6 +73,13 @@ export class AuthService {
     //   .catch(err => {
     //     throw err;
     //   });
+    return this.authModel
+      .findOne({ name })
+      .exec()
+      .then((foundUser: AuthenticationDataDto) =>
+        compare(password, foundUser.password)
+      )
+      .catch(err => console.error(err));
     return from(this.authModel.findOne({ name }).exec(), asyncScheduler)
       .pipe(
         mergeMap((foundUser: AuthenticationDataDto) =>

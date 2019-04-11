@@ -12,6 +12,11 @@ import {
 import { pipe, BehaviorSubject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AppService } from './app.service';
+import {
+  encryptMessage,
+  decryptMessage,
+  validateMessage
+} from '../shared/helpers';
 
 const date = new Date();
 
@@ -25,12 +30,14 @@ console.info(
 @Injectable()
 export class MqttProvider {
   private readonly _client: mqtt.MqttClient;
-  // stores currently executing messages
-  private syncMessageProcesses: Map<string, MqttData> = new Map();
+  // stores currently processing messages
+  private processingMessages: Map<string, MqttData> = new Map();
+  // subject for network synchronization handling
   private _syncMessageProcesses$ = new BehaviorSubject<
     Array<{ hash: string; state: HandshakeTypeEnum }>
   >([]);
-  private syncMessageProcessesValue: Array<{
+  // value of network synchronization handling subject
+  private processingMessagesValue: Array<{
     hash: string;
     state: HandshakeTypeEnum;
   }>;
@@ -55,7 +62,7 @@ export class MqttProvider {
     this._client.on('connect', () => {
       this.init();
     });
-    this.syncMessageProcessesValue = this._syncMessageProcesses$.value;
+    this.processingMessagesValue = this._syncMessageProcesses$.value;
   }
 
   /**
@@ -87,7 +94,7 @@ export class MqttProvider {
       const receivedMessage = message.toString();
       // when a message arrives, do something with it
       const decryptedMessage = JSON.parse(
-        this.appService.decryptMessage(receivedMessage)
+        decryptMessage(receivedMessage)
       ) as MqttResponse;
 
       if (this.isSignalingMqttMessage(decryptedMessage)) {
@@ -110,7 +117,14 @@ export class MqttProvider {
         const { handshake, data } = decryptedMessage as MqttMessage;
         if (handshake === HandshakeTypeEnum.DATA) {
           // do stuff with data
-          this.acknowledge(decryptedMessage as MqttMessage, topic);
+          const validatedData = validateMessage(data);
+          if (typeof validatedData === 'number') {
+            // place to get all ledgers and recognize the attacker
+            // validated data is nodeId of attacker
+          } else {
+            this.processIncommingRequest(topic, validatedData);
+            this.acknowledge(decryptedMessage as MqttMessage, topic);
+          }
         } else {
           // do stuff or log error
         }
@@ -128,11 +142,11 @@ export class MqttProvider {
    * @memberof MqttProvider
    */
   private handleIncomingAck(hash: string) {
-    this.syncMessageProcesses.delete(hash);
+    this.processingMessages.delete(hash);
     // first emit to subscribers
     this.changeState(hash, HandshakeTypeEnum.ACK);
     // then remove without emiting
-    this.removeFromProcessedMessagesSubject(hash);
+    this.removeFromProcessingMessagesSubject(hash);
   }
 
   /**
@@ -145,7 +159,7 @@ export class MqttProvider {
    */
   private handleIncomingSynAck(hash: string, topic: string) {
     this.changeState(hash, HandshakeTypeEnum.SYN_ACK);
-    const data = this.syncMessageProcesses.get(hash);
+    const data = this.processingMessages.get(hash);
     this.publishData(data, topic, hash);
   }
 
@@ -163,11 +177,13 @@ export class MqttProvider {
       handshake: HandshakeTypeEnum.SYN
     };
 
-    this._client.publish(topic, JSON.stringify(message));
+    const encrypted = encryptMessage(JSON.stringify(message));
 
-    this.syncMessageProcesses.set(hash, data);
+    this._client.publish(topic, encrypted);
+
+    this.processingMessages.set(hash, data);
     this._syncMessageProcesses$.next([
-      ...this.syncMessageProcessesValue,
+      ...this.processingMessagesValue,
       { hash, state: HandshakeTypeEnum.SYN }
     ]);
     return hash;
@@ -181,7 +197,7 @@ export class MqttProvider {
   private acknowledge({ hash }: MqttMessage, topic: string) {
     const message = { hash, handshake: HandshakeTypeEnum.ACK };
     this._client.publish(topic, JSON.stringify(message));
-    this.syncMessageProcessesValue = this.syncMessageProcessesValue.filter(
+    this.processingMessagesValue = this.processingMessagesValue.filter(
       val => val.hash !== hash
     );
   }
@@ -194,14 +210,14 @@ export class MqttProvider {
   private confirmSyn({ hash }: MqttSignalingMessage, topic: string) {
     // TODO: need to handle failure at network layer, if there is now ack confirmation of received data
     this._syncMessageProcesses$.next([
-      ...this.syncMessageProcessesValue,
+      ...this.processingMessagesValue,
       { hash, state: HandshakeTypeEnum.SYN_ACK }
     ]);
-    const toEncrypt = JSON.stringify({
+    const message = JSON.stringify({
       hash,
       handshake: HandshakeTypeEnum.SYN_ACK
     });
-    const encrypted = this.appService.encryptMessage(toEncrypt);
+    const encrypted = encryptMessage(message);
     this._client.publish(topic, encrypted);
   }
 
@@ -264,7 +280,7 @@ export class MqttProvider {
    * @memberof MqttProvider
    */
   private changeState(toChange: string, newState: HandshakeTypeEnum) {
-    const newValue = this.syncMessageProcessesValue.filter(
+    const newValue = this.processingMessagesValue.filter(
       ({ hash }) => hash !== toChange
     );
     this._syncMessageProcesses$.next([
@@ -280,9 +296,9 @@ export class MqttProvider {
    * @param {string} toRemove
    * @memberof MqttProvider
    */
-  private removeFromProcessedMessagesSubject(toRemove: string) {
+  private removeFromProcessingMessagesSubject(toRemove: string) {
     // we only want to remove without emiting to subsribes
-    this.syncMessageProcessesValue = this.syncMessageProcessesValue.filter(
+    this.processingMessagesValue = this.processingMessagesValue.filter(
       ({ hash }) => hash !== toRemove
     );
   }
@@ -294,5 +310,15 @@ export class MqttProvider {
     };
 
     this._client.publish(topic, JSON.stringify(message));
+  }
+
+  private processIncommingRequest(topic: string, data) {
+    if (topic === 'data') {
+      this.appService.storeData(data);
+    } else if (topic === 'config') {
+    } else {
+      // can be atacker, can be logged to the db
+      console.error('Unsuported topic used');
+    }
   }
 }

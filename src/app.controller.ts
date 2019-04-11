@@ -16,6 +16,7 @@ export class AppController {
     private mqttService: MqttService
   ) {}
 
+  // TODO: use with custom mqtt implementation
   @UsePipes(MqttMessageValidationPipe)
   @MessagePattern('data')
   saveData(data: any) {

@@ -27,19 +27,20 @@ import { AppService } from './app.service';
 @Injectable()
 export class MqttService {
   private messagesQueue = new Map<string, MqttMessage>();
-  /**
-   * @key topic: topic, to which are subsribers registred
-   * @value {
-   * @param {AppService.hash()} id
-   * @function fn: function to be executed
-   *        }
-   * @private
-   * @memberof MqttService
-   */
-  private subscribers = new Map<
-    string,
-    Array<{ id: string; fn: (message: any) => any }>
-  >();
+  // TODO: todo below
+  // /**
+  //  * @key topic: topic, to which are subsribers registred
+  //  * @value {
+  //  * @param {AppService.hash()} id
+  //  * @function fn: function to be executed
+  //  *        }
+  //  * @private
+  //  * @memberof MqttService
+  //  */
+  // private subscribers = new Map<
+  //   string,
+  //   Array<{ id: string; fn: (message: any) => any }>
+  // >();
 
   constructor(
     @InjectModel('LogModel') private readonly logModel: Model<LogModel>,
@@ -62,7 +63,7 @@ export class MqttService {
     const ackReceived = item =>
       item.hash === hash && item.state === HandshakeTypeEnum.ACK;
 
-    const subject = (condition: (...args) => boolean) =>
+    const conditionObservable = (condition: (...args) => boolean) =>
       this.mqttProvider.syncMessageProcesses$.pipe(
         mergeMap(messages => from(messages)),
         filter(value => condition(value))
@@ -80,16 +81,19 @@ export class MqttService {
           status: LogStatusEnum.PUBLISHING
         };
       }),
-      // creating log with status pending
+      // creating log with state pending
       storeToDB<LogModel>(this.logModel),
       // wait for syn-ack, every 2 seconds new attempt; after 3 attempts err;
-      this.retryPublishMechanism(subject(synAckReceived), subject(ackReceived))
+      this.retryPublishMechanism(
+        conditionObservable(synAckReceived),
+        conditionObservable(ackReceived)
+      )
     );
   }
 
-  private pushToMessages(message: MqttMessage) {
-    this.messagesQueue.set(message.hash, message);
-  }
+  // private pushToMessages(message: MqttMessage) {
+  //   this.messagesQueue.set(message.hash, message);
+  // }
 
   // private popFromMessages(message: MqttMessage, wasSuccessful: boolean) {
   //   this.storeMessageLog(message, wasSuccessful).pipe(
@@ -106,21 +110,24 @@ export class MqttService {
   //   );
   // }
 
-  registerSubsriber(
-    topic: string,
-    subscriber: { id: string; fn: (mess: any) => any }
-  ) {
-    const currentValue = this.subscribers.get(topic) || [];
-    this.subscribers.set(topic, [...currentValue, subscriber]);
-  }
+  // TODO: future possibilities to dynamically register subscriber function
+  // for specified topic, ex. you can send topic and function from client to
+  // react on messages from netwrok
+  // registerSubsriber(
+  //   topic: string,
+  //   subscriber: { id: string; fn: (mess: any) => any }
+  // ) {
+  //   const currentValue = this.subscribers.get(topic) || [];
+  //   this.subscribers.set(topic, [...currentValue, subscriber]);
+  // }
 
-  unregisterSubscriber(topic: string, functionId: string) {
-    const topicSubscribers = this.subscribers.get(topic);
-    const filteredSubscribers = topicSubscribers.filter(
-      message => message.id !== functionId
-    );
-    this.subscribers.set(topic, filteredSubscribers);
-  }
+  // unregisterSubscriber(topic: string, functionId: string) {
+  //   const topicSubscribers = this.subscribers.get(topic);
+  //   const filteredSubscribers = topicSubscribers.filter(
+  //     message => message.id !== functionId
+  //   );
+  //   this.subscribers.set(topic, filteredSubscribers);
+  // }
 
   /**
    *
@@ -152,6 +159,7 @@ export class MqttService {
         obs2.pipe(
           timeout(2000),
           catchError(err => {
+            // TODO: consider a solution what to do if data is not received
             this.mqttProvider.repeatSyncProcess(doc.topic, doc.hash);
             return throwError({ err, doc });
           }),
