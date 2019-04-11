@@ -1,7 +1,7 @@
 #!/bash/bin
 
 echo "transfer started..."
-rsync -r --delete-after $TRAVIS_BUILD_DIR/dist deploy@46.101.209.6:dist
+rsync -r --delete-after $TRAVIS_BUILD_DIR/dist deploy@104.248.18.71:dist
 echo "content transfered"
 
 ssh -t deploy@46.101.209.6 'cd dist/dist; npm i; pm2 restart ./main.js; exit'
