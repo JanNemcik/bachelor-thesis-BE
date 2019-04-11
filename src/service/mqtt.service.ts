@@ -14,7 +14,6 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { LogModel } from '../data';
-import { storeToDB } from 'src/shared';
 import { MqttProvider } from './mqtt.provider';
 import {
   MqttMessage,
@@ -23,6 +22,7 @@ import {
 } from '../data/interfaces';
 import { LogStateEnum, LogStatusEnum } from '../data/interfaces/enum/log.enum';
 import { AppService } from './app.service';
+import { storeToDB } from '../shared';
 
 @Injectable()
 export class MqttService {
@@ -43,7 +43,7 @@ export class MqttService {
   // >();
 
   constructor(
-    @InjectModel('LogModel') private readonly logModel: Model<LogModel>,
+    @InjectModel('LogsModel') private readonly logModel: Model<LogModel>,
     private readonly mqttProvider: MqttProvider,
     private appService: AppService
   ) {}
