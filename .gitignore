@@ -133,3 +133,4 @@ lib-cov
 dist
 
 .editorconfig
+*.mongo

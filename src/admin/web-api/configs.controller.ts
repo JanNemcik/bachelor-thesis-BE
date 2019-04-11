@@ -13,14 +13,18 @@ import {
 import { MessagePattern, Client, ClientProxy } from '@nestjs/microservices';
 import { ConfigsService } from '../service/configs.service';
 import { MqttMessageValidationPipe } from '../../config/mqtt-message-validation.pipe';
-import { MqttNodeConfigRequest, MqttNodeConfig } from '../data';
 import { Observable } from 'rxjs';
-import { PatternEnum, NodeDeviceTypeEnum } from '../../data/interfaces';
-import { MQTT_CLIENT_OPTIONS } from '../../shared';
+import {
+  PatternEnum,
+  NodeDeviceTypeEnum,
+  MqttNodeConfigRequest,
+  MqttNodeConfig
+} from '../../data/interfaces';
+import { MQTT_CLIENT_OPTIONS_PROD } from '../../shared';
 
 @Controller('config')
 export class ConfigsController {
-  @Client(MQTT_CLIENT_OPTIONS)
+  @Client(MQTT_CLIENT_OPTIONS_PROD)
   client: ClientProxy;
   constructor(private configsService: ConfigsService) {}
 

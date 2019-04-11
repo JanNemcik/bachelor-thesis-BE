@@ -1,6 +1,8 @@
 import { pipe, from, of } from 'rxjs';
-import { mergeMap, map, tap, reduce } from 'rxjs/operators';
+import { mergeMap, map, reduce } from 'rxjs/operators';
 import _ = require('lodash');
+import { createInstance } from './resolve-factory.functions';
+import { Document, Model } from 'mongoose';
 
 export const transformFromSchemaToModel = () =>
   pipe(
@@ -20,4 +22,10 @@ export const transformFromModelToSchema = () =>
   pipe(
     mergeMap((value: any) => (value.length ? from(value) : of(value))),
     map(result => _.mapKeys(result, (val, key) => _.snakeCase(key)))
+  );
+
+export const storeToDB = <T extends Document>(modelInstance: Model<T>) =>
+  pipe(
+    map(toStore => createInstance<T>(modelInstance, toStore)),
+    mergeMap(createdDocument => from(createdDocument.save()))
   );

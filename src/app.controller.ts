@@ -5,31 +5,21 @@ import { Client, ClientProxy, MessagePattern } from '@nestjs/microservices';
 import { Observable, of, interval } from 'rxjs';
 import { mergeMap, tap } from 'rxjs/operators';
 import { MqttMessageValidationPipe } from './config/mqtt-message-validation.pipe';
-import { MQTT_CLIENT_OPTIONS } from './shared';
-import { SensorNodeType } from './data/interfaces';
+import { SensorNodeType, HandshakeTypeEnum } from './data/interfaces';
+import { MqttService } from './service/mqtt.service';
 
 @Controller()
 export class AppController {
-  @Client(MQTT_CLIENT_OPTIONS)
-  client: ClientProxy;
   constructor(
-    private readonly appService: AppService,
-    private gatewayService: GatewayService
+    private appService: AppService,
+    private readonly gatewayService: GatewayService,
+    private mqttService: MqttService
   ) {}
 
-  @Get()
-  call(): Observable<number> {
-    const pattern = 'post';
-    const data = [1, 2, 3, 4, 5];
-    interval(10000)
-      .pipe(mergeMap(() => this.client.send<number>(pattern, data)))
-      .subscribe();
-    return of();
-  }
-
+  // TODO: use with custom mqtt implementation
   @UsePipes(MqttMessageValidationPipe)
   @MessagePattern('data')
-  saveData(data: SensorNodeType) {
+  saveData(data: any) {
     return this.appService.storeData(data).pipe(
       tap(broadcastData => {
         console.log('broadcast', broadcastData);

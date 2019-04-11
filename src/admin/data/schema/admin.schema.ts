@@ -1,3 +1,3 @@
 import { Schema } from 'mongoose';
 
-export const AdminSchema = new Schema({});
+export const ADMIN_SCHEMA = new Schema({});

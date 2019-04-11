@@ -2,7 +2,7 @@ import { Schema } from 'mongoose';
 import * as _ from 'lodash';
 import { NodeDeviceTypeEnum, AirSensorQualityEnum } from '../interfaces';
 
-export const DataSchema = new Schema({
+export const DATA_SCHEMA = new Schema({
   node_id: Number,
   timestamp: { type: Date, default: Date.now },
   node_type: { type: String, enum: _.keys(NodeDeviceTypeEnum) },
