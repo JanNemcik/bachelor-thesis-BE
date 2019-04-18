@@ -2,10 +2,10 @@ import { JwtService } from '@nestjs/jwt';
 import {
   Injectable,
   BadRequestException,
-  ForbiddenException,
-  UnauthorizedException
+  UnauthorizedException,
+  NotFoundException
 } from '@nestjs/common';
-import { Observable, from, asyncScheduler, throwError } from 'rxjs';
+import { Observable, from, asyncScheduler, throwError, of } from 'rxjs';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -95,6 +95,7 @@ export class AuthService {
    */
   verifyUser(payload: AuthenticationDataDto) {
     const { password, name } = payload;
+    console.log(payload);
     return from(
       this.authModel
         .findOne({ name })
@@ -102,12 +103,15 @@ export class AuthService {
         .exec()
     ).pipe(
       mergeMap((foundUser: AuthenticationDataDto) => {
-        return from(compare(password, foundUser.password));
-      }),
-      tap(result => {
-        if (!result) {
-          throw new ForbiddenException('Wrong password!!');
-        }
+        return !!!foundUser
+          ? of(null)
+          : from(compare(password, foundUser.password)).pipe(
+              tap(result => {
+                if (!result) {
+                  throw new NotFoundException('Wrong password!!');
+                }
+              })
+            );
       })
     );
   }

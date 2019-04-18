@@ -17,7 +17,7 @@ export const MQTT_CLIENT_OPTIONS_PROD: ClientOptions = {
 
 export const DATABASE_OPTIONS_LOCAL: MongooseModuleAsyncOptions = {
   useFactory: () => ({
-    uri: 'mongodb://localhost:27017/bachelor-iot'
+    uri: 'mongodb://localhost:27017/bachelorIoT'
   })
 };
 

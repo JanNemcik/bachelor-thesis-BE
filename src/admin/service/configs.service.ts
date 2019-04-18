@@ -6,11 +6,12 @@ import {
   MqttNodeConfig,
   MqttNodeConfigRequest
 } from '../../data/interfaces';
-import { from, Observable } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import * as _ from 'lodash';
-import { take } from 'rxjs/operators';
+import { take, catchError, mergeMap } from 'rxjs/operators';
 import { transformFromSchemaToModel } from '../../shared/pipeables';
 import { ConfigsModel } from '../data';
+import { createInstance } from '../../shared';
 
 @Injectable()
 export class ConfigsService {
@@ -29,7 +30,13 @@ export class ConfigsService {
    * Creates new configinterval
    * @param config config object
    */
-  createConfig(config: MqttNodeConfig) {}
+  createConfig(config: MqttNodeConfig) {
+    const { configReq, ...toStore } = config;
+    return of(createInstance<ConfigsModel>(this.configsModel, toStore)).pipe(
+      mergeMap(createdConfig => from(createdConfig.save())),
+      catchError(err => of(err))
+    );
+  }
 
   /**
    * Updates config

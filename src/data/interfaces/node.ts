@@ -6,6 +6,7 @@ interface NodeDevice {
 }
 
 interface NodeConfig extends NodeDevice {
+  // indicating wheter it is a config request, not neccessary to store
   configReq: boolean;
 }
 
