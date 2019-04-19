@@ -8,7 +8,8 @@ import {
   Delete,
   Param,
   Req,
-  Query
+  Query,
+  Post
 } from '@nestjs/common';
 import { MessagePattern, Client, ClientProxy } from '@nestjs/microservices';
 import { ConfigsService } from '../service/configs.service';
@@ -20,12 +21,9 @@ import {
   MqttNodeConfigRequest,
   MqttNodeConfig
 } from '../../data/interfaces';
-import { MQTT_CLIENT_OPTIONS_PROD } from '../../shared';
 
 @Controller('config')
 export class ConfigsController {
-  @Client(MQTT_CLIENT_OPTIONS_PROD)
-  client: ClientProxy;
   constructor(private configsService: ConfigsService) {}
 
   /**
@@ -34,7 +32,6 @@ export class ConfigsController {
    * @memberof ConfigsController
    */
   @UsePipes(MqttMessageValidationPipe)
-  @MessagePattern('config')
   getConfigForNetwork(configRequest: MqttNodeConfigRequest) {
     console.log('config request: ', configRequest);
     const config = this.configsService.getConfigForNetwork(configRequest);
@@ -45,7 +42,8 @@ export class ConfigsController {
     pattern: string,
     config: MqttNodeConfig
   ): Observable<any> {
-    return this.client.send(pattern, config);
+    return;
+    // return this.client.send(pattern, config);
   }
 
   @Get('')
@@ -59,9 +57,10 @@ export class ConfigsController {
     return this.configsService.storeConfig(config);
   }
 
-  @Patch('create')
+  @Post('create')
   @HttpCode(201)
   createConfig(@Body() config: MqttNodeConfig) {
+    console.log(config);
     return this.configsService.createConfig(config);
   }
 

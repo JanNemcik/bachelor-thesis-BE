@@ -1,4 +1,7 @@
-import { MQTT_CLIENT_OPTIONS_DEV } from '../shared/constants';
+import {
+  MQTT_CLIENT_OPTIONS_DEV,
+  MQTT_CLIENT_OPTIONS
+} from '../shared/constants';
 import { Injectable } from '@nestjs/common';
 import mqtt = require('mqtt');
 import * as _ from 'lodash';
@@ -54,10 +57,7 @@ export class MqttProvider {
       ': MQTT Provider initialized'
     );
 
-    this._client = mqtt.connect(
-      'mqtt://m24.cloudmqtt.com',
-      MQTT_CLIENT_OPTIONS_DEV
-    );
+    this._client = mqtt.connect('iot-backend.itprof.sk', MQTT_CLIENT_OPTIONS);
 
     this._client.on('connect', () => {
       this.init();

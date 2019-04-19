@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -6,10 +6,13 @@ import {
   MqttNodeConfig,
   MqttNodeConfigRequest
 } from '../../data/interfaces';
-import { from, Observable, of } from 'rxjs';
+import { from, Observable, of, throwError } from 'rxjs';
 import * as _ from 'lodash';
-import { take, catchError, mergeMap } from 'rxjs/operators';
-import { transformFromSchemaToModel } from '../../shared/pipeables';
+import { take, catchError, mergeMap, map } from 'rxjs/operators';
+import {
+  transformFromSchemaToModel,
+  transformFromModelToSchema
+} from '../../shared/pipeables';
 import { ConfigsModel } from '../data';
 import { createInstance } from '../../shared';
 
@@ -31,10 +34,17 @@ export class ConfigsService {
    * @param config config object
    */
   createConfig(config: MqttNodeConfig) {
-    const { configReq, ...toStore } = config;
-    return of(createInstance<ConfigsModel>(this.configsModel, toStore)).pipe(
+    const toStore = { ...config, createdAt: new Date() };
+    return of(toStore).pipe(
+      transformFromModelToSchema(),
+      map(transformed =>
+        createInstance<ConfigsModel>(this.configsModel, transformed)
+      ),
       mergeMap(createdConfig => from(createdConfig.save())),
-      catchError(err => of(err))
+      catchError(err => {
+        console.error(err);
+        return throwError(new BadRequestException(err));
+      })
     );
   }
 

@@ -9,11 +9,11 @@ import { AdminModule } from './admin/admin.module';
 import { MainModule } from './main/main.module';
 import { GatewayService } from './service/gateway.service';
 import { EventsGateway } from './config/events.gateway';
-import mongoose = require('mongoose');
 import { DATABASE_OPTIONS_LOCAL } from './shared';
 import { LOG_SCHEMA } from './data';
 import { MqttService } from './service/mqtt.service';
 import { MqttProvider } from './service/mqtt.provider';
+import mongoose = require('mongoose');
 
 mongoose.set('debug', true);
 @Module({

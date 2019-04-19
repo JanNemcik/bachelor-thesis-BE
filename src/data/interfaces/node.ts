@@ -45,5 +45,6 @@ export {
   LightSensorNode,
   AirSensorNode,
   NodeConfig,
-  SensorNodeType
+  SensorNodeType,
+  NodeDevice
 };

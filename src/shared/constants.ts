@@ -1,23 +1,21 @@
-import { Transport, ClientOptions } from '@nestjs/microservices';
 import { MongooseModuleAsyncOptions } from '@nestjs/mongoose';
+import { IClientOptions } from 'mqtt';
 
-export const MQTT_CLIENT_OPTIONS_PROD: ClientOptions = {
-  transport: Transport.MQTT,
-  options: {
-    servers: [
-      {
-        host: 'iot.itprof.sk',
-        port: 1883
-      }
-    ],
-    username: 'bachelor',
-    password: 'iotbachelor'
-  }
+export const MQTT_CLIENT_OPTIONS: IClientOptions = {
+  port: 1883,
+  clientId:
+    'mqttjs_' +
+    Math.random()
+      .toString(16)
+      .substr(2, 8),
+  username: 'bachelor',
+  password: 'iotbachelor',
+  protocol: 'mqtt'
 };
 
 export const DATABASE_OPTIONS_LOCAL: MongooseModuleAsyncOptions = {
   useFactory: () => ({
-    uri: 'mongodb://localhost:27017/bachelorIoT'
+    uri: 'mongodb://localhost:27017/bachelor-iot'
   })
 };
 

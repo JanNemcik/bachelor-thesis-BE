@@ -1,8 +1,9 @@
 import { HandshakeTypeEnum } from './enum/handshake.enum';
 import { NodeConfig } from '.';
 import { LogModel } from '../model/log.model';
+import { NodeDevice } from './node';
 
-interface MqttNodeConfig extends NodeConfig {
+interface MqttNodeConfig extends NodeDevice {
   /**
    * format MM:SS
    */
