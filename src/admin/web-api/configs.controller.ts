@@ -19,32 +19,12 @@ import {
   PatternEnum,
   NodeDeviceTypeEnum,
   MqttNodeConfigRequest,
-  MqttNodeConfig
+  NodeConfig
 } from '../../data/interfaces';
 
 @Controller('config')
 export class ConfigsController {
   constructor(private configsService: ConfigsService) {}
-
-  /**
-   * Pushes requested config to network
-   * @param {MqttNodeConfigRequest} configRequest
-   * @memberof ConfigsController
-   */
-  @UsePipes(MqttMessageValidationPipe)
-  getConfigForNetwork(configRequest: MqttNodeConfigRequest) {
-    console.log('config request: ', configRequest);
-    const config = this.configsService.getConfigForNetwork(configRequest);
-    return this.pushConfigToNetwork(PatternEnum.CONFIG, config);
-  }
-
-  private pushConfigToNetwork(
-    pattern: string,
-    config: MqttNodeConfig
-  ): Observable<any> {
-    return;
-    // return this.client.send(pattern, config);
-  }
 
   @Get('')
   get() {
@@ -59,14 +39,14 @@ export class ConfigsController {
 
   @Post('create')
   @HttpCode(201)
-  createConfig(@Body() config: MqttNodeConfig) {
+  createConfig(@Body() config: NodeConfig) {
     console.log(config);
     return this.configsService.createConfig(config);
   }
 
   @Patch('patch')
   @HttpCode(200)
-  patchConfig(@Body() config: MqttNodeConfig) {
+  patchConfig(@Body() config: NodeConfig) {
     return this.configsService.patchConfig(config);
   }
 
@@ -84,7 +64,7 @@ export class ConfigsController {
 
   @Get(':id')
   @HttpCode(200)
-  getNodeConfig(@Param('id') nodeId: number) {
+  getNodeConfig(@Param('id') nodeId: string) {
     this.configsService.getNodeConfig(nodeId);
   }
 }

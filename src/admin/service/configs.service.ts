@@ -3,8 +3,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
   NodeDeviceTypeEnum,
-  MqttNodeConfig,
-  MqttNodeConfigRequest
+  MqttNodeConfigRequest,
+  NodeConfig,
+  MqttNodeConfigResponse
 } from '../../data/interfaces';
 import { from, Observable, of, throwError } from 'rxjs';
 import * as _ from 'lodash';
@@ -33,7 +34,7 @@ export class ConfigsService {
    * Creates new configinterval
    * @param config config object
    */
-  createConfig(config: MqttNodeConfig) {
+  createConfig(config: NodeConfig) {
     const toStore = { ...config, createdAt: new Date() };
     return of(toStore).pipe(
       transformFromModelToSchema(),
@@ -52,7 +53,7 @@ export class ConfigsService {
    * Updates config
    * @param config updated config
    */
-  patchConfig(config: MqttNodeConfig) {}
+  patchConfig(config: NodeConfig) {}
 
   /**
    * TODO: here should probably type
@@ -77,7 +78,7 @@ export class ConfigsService {
     );
   }
 
-  getNodeConfig(nodeId: string): MqttNodeConfig {
+  getNodeConfig(nodeId: string): NodeConfig {
     nodeId = nodeId.toLowerCase();
     return;
   }
@@ -86,7 +87,7 @@ export class ConfigsService {
    * Returns config requested by network
    * @param config requeted config
    */
-  getConfigForNetwork(config: MqttNodeConfigRequest): MqttNodeConfig {
+  getConfigForNetwork(config: MqttNodeConfigRequest): MqttNodeConfigResponse {
     return;
   }
 }
