@@ -23,7 +23,7 @@ export class NodesController {
 
   @Delete(':id')
   @HttpCode(200)
-  deleteNode(@Param('id') id: number) {
+  deleteNode(@Param('id') id: string) {
     return this.nodesService.deleteNode(id);
   }
 

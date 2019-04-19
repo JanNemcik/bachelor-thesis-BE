@@ -64,7 +64,7 @@ export class ConfigsController {
 
   @Get(':id')
   @HttpCode(200)
-  getNodeConfig(@Param('id') nodeId: string) {
-    this.configsService.getNodeConfig(nodeId);
+  getNodeConfigs(@Param('id') id: string) {
+    return this.configsService.getNodeConfigs(id);
   }
 }

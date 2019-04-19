@@ -3,7 +3,7 @@ import { NodeDevice } from '../../data/interfaces';
 import { InjectModel } from '@nestjs/mongoose';
 import { NodesModel } from '../data/model/node.model';
 import { Model } from 'mongoose';
-import { of, from, throwError } from 'rxjs';
+import { of, from, throwError, Observable } from 'rxjs';
 import {
   createInstance,
   transformFromModelToSchema,
@@ -33,7 +33,7 @@ export class NodesService {
     );
   }
 
-  deleteNode(id: number) {
+  deleteNode(id: string) {
     return from(this.nodesModel.deleteOne({ node_id: id })).pipe(
       map(status => status.ok),
       catchError(
@@ -47,6 +47,18 @@ export class NodesService {
     return from(
       this.nodesModel
         .find({ node_type: type })
+        .lean()
+        .exec()
+    ).pipe(
+      transformFromSchemaToModel(),
+      take(1)
+    );
+  }
+
+  getNodeByObjectId(objectId: string) {
+    return from(
+      this.nodesModel
+        .findById(objectId)
         .lean()
         .exec()
     ).pipe(

@@ -5,4 +5,5 @@ export interface ConfigsModel extends Document {
   createdAt: Date;
   interval: number;
   nodeType: string;
+  isCurrent: boolean;
 }
