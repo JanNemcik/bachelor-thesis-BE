@@ -77,7 +77,8 @@ export class ConfigsService {
     );
   }
 
-  getNodeConfig(nodeId: number): MqttNodeConfig {
+  getNodeConfig(nodeId: string): MqttNodeConfig {
+    nodeId = nodeId.toLowerCase();
     return;
   }
 

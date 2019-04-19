@@ -15,10 +15,9 @@ import { NodesService } from '../service/nodes.service';
 @Controller('nodes')
 export class NodesController {
   constructor(private nodesService: NodesService) {}
-  @Patch('')
+  @Post('')
   @HttpCode(201)
   addNode(@Body() node: NodeDevice) {
-    console.log(node);
     return this.nodesService.createNode(node);
   }
 

@@ -1,7 +1,7 @@
 import { Document } from 'mongoose';
 
 export interface ConfigsModel extends Document {
-  nodeId: number;
+  nodeId: string;
   createdAt: Date;
   interval: number;
   nodeType: string;

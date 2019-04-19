@@ -19,6 +19,7 @@ export class NodesService {
   ) {}
 
   createNode(node: NodeDevice) {
+    node = { ...node, nodeId: node.nodeId.toLowerCase() };
     return of(node).pipe(
       transformFromModelToSchema(),
       map(transformed =>
