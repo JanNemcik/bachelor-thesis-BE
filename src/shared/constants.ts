@@ -12,7 +12,8 @@ export const MQTT_CLIENT_OPTIONS: IClientOptions = {
   password: 'iotbachelor',
   protocol: 'mqtt',
   protocolId: 'MQTT',
-  host: 'iot-backend.itprof.sk'
+  host: 'iot-backend.itprof.sk',
+  connectTimeout: 2147483647
 };
 
 export const DATABASE_OPTIONS_LOCAL: MongooseModuleAsyncOptions = {

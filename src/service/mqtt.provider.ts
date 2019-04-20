@@ -11,7 +11,8 @@ import {
   MqttResponse,
   MqttData,
   HandshakeTypeEnum,
-  TopicEnum
+  TopicEnum,
+  PublisherEnum
 } from '../data/interfaces';
 import { pipe, BehaviorSubject } from 'rxjs';
 import { map, share } from 'rxjs/operators';
@@ -102,12 +103,10 @@ export class MqttProvider {
       const receivedMessage = message.toString();
       // when a message arrives, do something with it
       try {
-        console.log(receivedMessage);
-        console.log(decryptMessage(receivedMessage));
         const decryptedMessage = JSON.parse(
           decryptMessage(receivedMessage)
         ) as MqttResponse;
-        if (!decryptedMessage.clientId) {
+        if (decryptedMessage.publisher === PublisherEnum.NETWORK) {
           if (this.isSignalingMqttMessage(decryptedMessage)) {
             const { handshake } = decryptedMessage;
             switch (handshake) {
@@ -193,7 +192,7 @@ export class MqttProvider {
     const message: MqttSignalingMessage = {
       hash,
       handshake: HandshakeTypeEnum.SYN,
-      clientId: this.clientId
+      publisher: PublisherEnum.SERVER
     };
 
     const encrypted = encryptMessage(JSON.stringify(message));
@@ -248,14 +247,14 @@ export class MqttProvider {
     if (typeof object !== 'object') {
       try {
         object = JSON.parse(object);
-        return (
-          _.has(object, 'data') &&
-          _.has(object, 'hash') &&
-          _.has(object, 'handshake')
-        );
       } catch (e) {
         // log error
       }
+      return (
+        _.has(object, 'data') &&
+        _.has(object, 'hash') &&
+        _.has(object, 'handshake')
+      );
     }
   }
 
@@ -285,7 +284,7 @@ export class MqttProvider {
       data,
       handshake: HandshakeTypeEnum.DATA,
       hash,
-      clientId: this.clientId
+      publisher: PublisherEnum.SERVER
     };
     const encrypted = encryptMessage(JSON.stringify(message));
     this.processingMessages.set(hash, encrypted);

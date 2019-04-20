@@ -62,8 +62,8 @@ export class MqttService {
         mergeMap(({ topic, message }) => this.publishMessage(topic, message))
       )
       .subscribe({
-        next: () => {
-          console.log('success');
+        next: v => {
+          console.log('success', v);
         },
         error: e => {
           console.error(e);

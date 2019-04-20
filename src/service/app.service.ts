@@ -28,6 +28,8 @@ export class AppService {
     );
   }
 
+  broadcastData() {}
+
   /**
    * Encrypts given message
    * @param message

@@ -38,10 +38,10 @@ export class ConfigsController {
     return this.configsService.createConfig(config);
   }
 
-  @Patch('patch')
+  @Patch('patch/:id')
   @HttpCode(200)
-  patchConfig(@Body() config: NodeConfig) {
-    return this.configsService.patchConfig(config);
+  patchConfig(@Param('id') id: string) {
+    return this.configsService.updateCurrentConfig(id);
   }
 
   @Delete('delete/:type')

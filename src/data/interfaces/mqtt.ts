@@ -1,6 +1,7 @@
 import { HandshakeTypeEnum } from './enum/handshake.enum';
 import { NodeConfig, NodeDevice } from './node';
 import { LogModel } from '../model/log.model';
+import { PublisherEnum } from './enum/mqtt.enum';
 
 interface MqttNodeConfigRequest extends NodeDevice {
   configReq: boolean;
@@ -10,7 +11,7 @@ interface MqttNodeConfigResponse extends MqttNodeConfigRequest, NodeConfig {}
 interface MqttSignalingMessage {
   hash: string;
   handshake: HandshakeTypeEnum;
-  clientId: string;
+  publisher: PublisherEnum;
 }
 
 interface MqttMessage<T = any> extends MqttSignalingMessage {

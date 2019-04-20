@@ -58,7 +58,8 @@ export class ConfigsService {
                     node_id: confModel.node_id,
                     created_at: { $ne: confModel.created_at }
                   },
-                  { is_current: false }
+                  { is_current: false },
+                  { new: true }
                 )
                 .exec()
             ).pipe(mapTo(confModel))
@@ -82,7 +83,41 @@ export class ConfigsService {
    * Updates config
    * @param config updated config
    */
-  patchConfig(config: NodeConfig) {}
+  updateCurrentConfig(objectId: string) {
+    return from(
+      this.configsModel
+        .findByIdAndUpdate(objectId, { is_current: true }, { new: true })
+        .lean()
+        .exec()
+    ).pipe(
+      mergeMap(res =>
+        from(
+          this.configsModel
+            .findOneAndUpdate(
+              {
+                _id: { $ne: res._id },
+                is_current: true,
+                node_id: res.node_id
+              },
+              { is_current: false }
+            )
+            .exec()
+        ).pipe(mapTo(res))
+      ),
+      tap(({ node_id, interval, node_type }) => {
+        this.mqttService.sendMessageToNetwork(TopicEnum.CONFIG, {
+          configReq: false,
+          node_id,
+          interval,
+          node_type
+        });
+      }),
+      catchError(err => {
+        console.error(err);
+        return throwError(new BadRequestException(err));
+      })
+    );
+  }
 
   /**
    * TODO: here should probably type
