@@ -12,7 +12,8 @@ export class EventsGateway {
   @WebSocketServer() server;
 
   emit<T = any>(data: T, messageIdentity: string) {
-    this.server.emit(messageIdentity, { data });
+    console.log('emitting', data);
+    this.server.emit(messageIdentity, data);
   }
 
   @SubscribeMessage('events')

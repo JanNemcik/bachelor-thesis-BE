@@ -1,13 +1,15 @@
 import { AirSensorQualityEnum, NodeDeviceTypeEnum } from './enum/node.enum';
 
 interface NodeDevice {
-  nodeId: number;
+  nodeId: string;
   nodeType: NodeDeviceTypeEnum;
 }
 
 interface NodeConfig extends NodeDevice {
-  // indicating wheter it is a config request, not neccessary to store
-  configReq: boolean;
+  /**
+   * format secs
+   */
+  interval: number;
 }
 
 interface NodeData extends NodeDevice {
@@ -45,5 +47,6 @@ export {
   LightSensorNode,
   AirSensorNode,
   NodeConfig,
-  SensorNodeType
+  SensorNodeType,
+  NodeDevice
 };

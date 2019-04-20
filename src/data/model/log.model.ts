@@ -1,8 +1,8 @@
 import { Document } from 'mongoose';
-import { LogStateEnum, LogStatusEnum } from '../interfaces';
+import { LogStateEnum, LogStatusEnum, TopicEnum } from '../interfaces';
 
 export interface LogModel extends Document {
-  topic: string;
+  topic: TopicEnum;
   hash: string;
   state: LogStateEnum;
   status: LogStatusEnum;

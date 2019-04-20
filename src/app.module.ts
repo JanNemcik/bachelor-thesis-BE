@@ -9,34 +9,29 @@ import { AdminModule } from './admin/admin.module';
 import { MainModule } from './main/main.module';
 import { GatewayService } from './service/gateway.service';
 import { EventsGateway } from './config/events.gateway';
-import mongoose = require('mongoose');
 import { DATABASE_OPTIONS_LOCAL } from './shared';
 import { LOG_SCHEMA } from './data';
 import { MqttService } from './service/mqtt.service';
 import { MqttProvider } from './service/mqtt.provider';
+import { SharedModule } from './shared/shared.module';
+
+import mongoose = require('mongoose');
 
 mongoose.set('debug', true);
 @Module({
   imports: [
     AuthModule,
     MongooseModule.forRootAsync(DATABASE_OPTIONS_LOCAL),
-    MongooseModule.forFeature([
-      { name: 'LogsModel', schema: LOG_SCHEMA, collection: 'logs' }
-    ]),
     AdminModule,
-    MainModule
+    MainModule,
+    SharedModule
   ],
   controllers: [AppController],
   providers: [
-    AppService,
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseTransformInterceptor
-    },
-    GatewayService,
-    EventsGateway,
-    MqttService,
-    MqttProvider
+    }
   ]
 })
 export class AppModule {}

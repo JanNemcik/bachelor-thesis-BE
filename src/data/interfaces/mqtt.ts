@@ -1,18 +1,17 @@
 import { HandshakeTypeEnum } from './enum/handshake.enum';
-import { NodeConfig } from '.';
+import { NodeConfig, NodeDevice } from './node';
 import { LogModel } from '../model/log.model';
+import { PublisherEnum } from './enum/mqtt.enum';
 
-interface MqttNodeConfig extends NodeConfig {
-  /**
-   * format MM:SS
-   */
-  interval: string;
+interface MqttNodeConfigRequest extends NodeDevice {
+  configReq: boolean;
 }
-interface MqttNodeConfigRequest extends NodeConfig {}
+interface MqttNodeConfigResponse extends MqttNodeConfigRequest, NodeConfig {}
 
 interface MqttSignalingMessage {
   hash: string;
   handshake: HandshakeTypeEnum;
+  publisher: PublisherEnum;
 }
 
 interface MqttMessage<T = any> extends MqttSignalingMessage {
@@ -33,7 +32,7 @@ interface MqttLogManager {
   err?: string;
 }
 export {
-  MqttNodeConfig,
+  MqttNodeConfigResponse,
   MqttNodeConfigRequest,
   MqttMessage,
   MqttMessageWrapper,

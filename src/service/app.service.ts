@@ -11,8 +11,7 @@ import * as crypto_js from 'crypto-js';
 @Injectable()
 export class AppService {
   constructor(
-    @InjectModel('DataModel') private readonly dataModel: Model<DataModel>,
-    private gatewayService: GatewayService
+    @InjectModel('DataModel') private readonly dataModel: Model<DataModel>
   ) {}
 
   storeData(data: any) {
@@ -28,6 +27,8 @@ export class AppService {
       catchError(err => throwError(err))
     );
   }
+
+  broadcastData() {}
 
   /**
    * Encrypts given message

@@ -1,52 +1,24 @@
 import {
   Controller,
-  UsePipes,
   Get,
   Patch,
   Body,
   HttpCode,
   Delete,
   Param,
-  Req,
-  Query
+  Query,
+  Post
 } from '@nestjs/common';
-import { MessagePattern, Client, ClientProxy } from '@nestjs/microservices';
 import { ConfigsService } from '../service/configs.service';
-import { MqttMessageValidationPipe } from '../../config/mqtt-message-validation.pipe';
-import { Observable } from 'rxjs';
 import {
-  PatternEnum,
   NodeDeviceTypeEnum,
   MqttNodeConfigRequest,
-  MqttNodeConfig
+  NodeConfig
 } from '../../data/interfaces';
-import { MQTT_CLIENT_OPTIONS_PROD } from '../../shared';
 
 @Controller('config')
 export class ConfigsController {
-  @Client(MQTT_CLIENT_OPTIONS_PROD)
-  client: ClientProxy;
   constructor(private configsService: ConfigsService) {}
-
-  /**
-   * Pushes requested config to network
-   * @param {MqttNodeConfigRequest} configRequest
-   * @memberof ConfigsController
-   */
-  @UsePipes(MqttMessageValidationPipe)
-  @MessagePattern('config')
-  getConfigForNetwork(configRequest: MqttNodeConfigRequest) {
-    console.log('config request: ', configRequest);
-    const config = this.configsService.getConfigForNetwork(configRequest);
-    return this.pushConfigToNetwork(PatternEnum.CONFIG, config);
-  }
-
-  private pushConfigToNetwork(
-    pattern: string,
-    config: MqttNodeConfig
-  ): Observable<any> {
-    return this.client.send(pattern, config);
-  }
 
   @Get('')
   get() {
@@ -59,16 +31,17 @@ export class ConfigsController {
     return this.configsService.storeConfig(config);
   }
 
-  @Patch('create')
+  @Post('create')
   @HttpCode(201)
-  createConfig(@Body() config: MqttNodeConfig) {
+  createConfig(@Body() config: NodeConfig) {
+    console.log(config);
     return this.configsService.createConfig(config);
   }
 
-  @Patch('patch')
+  @Patch('patch/:id')
   @HttpCode(200)
-  patchConfig(@Body() config: MqttNodeConfig) {
-    return this.configsService.patchConfig(config);
+  patchConfig(@Param('id') id: string) {
+    return this.configsService.updateCurrentConfig(id);
   }
 
   @Delete('delete/:type')
@@ -85,7 +58,7 @@ export class ConfigsController {
 
   @Get(':id')
   @HttpCode(200)
-  getNodeConfig(@Param('id') nodeId: number) {
-    this.configsService.getNodeConfig(nodeId);
+  getNodeConfigs(@Param('id') id: string) {
+    return this.configsService.getNodeConfigs(id);
   }
 }
