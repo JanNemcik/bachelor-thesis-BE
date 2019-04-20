@@ -18,7 +18,6 @@ export class GatewayService {
    * @memberof GatewayService
    */
   brodcastData<T = any>(data: T, messageIdentity: string) {
-    console.log(messageIdentity, data);
     this.gatewayProvider.emit<T>(data, messageIdentity);
   }
 }

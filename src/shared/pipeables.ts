@@ -8,7 +8,6 @@ export const transformFromSchemaToModel = () =>
   pipe(
     //
     mergeMap((value: any) => (value.length ? from(value) : of(value))),
-    //tap(val => console.log('trsd', val)),
     //
     reduce<any[]>(
       (prev, curr: any) => [
@@ -17,7 +16,6 @@ export const transformFromSchemaToModel = () =>
       ],
       []
     )
-    //tap(val => console.log('trsd after', val))
   );
 
 export const transformFromModelToSchema = () =>

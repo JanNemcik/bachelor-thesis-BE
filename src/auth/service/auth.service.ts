@@ -95,7 +95,6 @@ export class AuthService {
    */
   verifyUser(payload: AuthenticationDataDto) {
     const { password, name } = payload;
-    console.log(payload);
     return from(
       this.authModel
         .findOne({ name })

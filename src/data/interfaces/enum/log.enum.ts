@@ -1,7 +1,8 @@
 export enum LogStateEnum {
   PENDING,
   SUCCESSFUL,
-  ERRORED
+  ERRORED,
+  ATTACK
 }
 
 export enum LogStatusEnum {

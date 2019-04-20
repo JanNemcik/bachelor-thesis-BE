@@ -39,15 +39,18 @@ export const createHashedId = (toHash): string =>
     .toString()
     .substr(0, 10);
 
-export function validateMessage(data: MqttResponse): number | MqttResponse {
+export function validateMessage(data: MqttResponse): string | MqttResponse {
   const containsInjections = isProhibited(data);
+  if (containsInjections) {
+    data = sanitizeQuery(data);
+  }
   const copiedData =
     typeof data === 'object' ? JSON.stringify({ ...data }) : '' + data;
   const match = copiedData.match('nieco');
 
   if ((match && match.length) || containsInjections) {
     console.log('attacker');
-    return data.nodeId as number;
+    return data.nodeId as string;
   }
   return data;
 }

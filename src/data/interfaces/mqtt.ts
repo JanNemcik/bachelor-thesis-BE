@@ -24,7 +24,7 @@ interface MqttMessageWrapper<T = any> {
 }
 
 interface MqttResponse extends MqttMessage {
-  nodeId: number;
+  nodeId: string;
 }
 type MqttData = any;
 interface MqttLogManager {

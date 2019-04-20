@@ -7,5 +7,6 @@ export const LOG_SCHEMA = new Schema({
   hash: String,
   state: { type: Number, enum: _.values(LogStateEnum) },
   status: { type: Number, enum: _.values(LogStatusEnum) },
-  err: String
+  err: String,
+  timestamp: { type: Number, default: Date.now() }
 });
