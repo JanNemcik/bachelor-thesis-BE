@@ -1,7 +1,4 @@
-import {
-  MQTT_CLIENT_OPTIONS_DEV,
-  MQTT_CLIENT_OPTIONS
-} from '../shared/constants';
+import { MQTT_CLIENT_OPTIONS } from '../shared/constants';
 import { Injectable } from '@nestjs/common';
 import mqtt = require('mqtt');
 import * as _ from 'lodash';
@@ -14,7 +11,7 @@ import {
   TopicEnum,
   PublisherEnum
 } from '../data/interfaces';
-import { pipe, BehaviorSubject } from 'rxjs';
+import { pipe, BehaviorSubject, of, ReplaySubject } from 'rxjs';
 import { map, share } from 'rxjs/operators';
 import { AppService } from './app.service';
 import {
@@ -36,7 +33,6 @@ console.info(
 @Injectable()
 export class MqttProvider {
   private readonly _client: mqtt.MqttClient;
-  private clientId = MQTT_CLIENT_OPTIONS.clientId;
   // stores currently processing messages
   private processingMessages: Map<string, MqttData> = new Map();
   // subject for network synchronization handling
@@ -57,6 +53,12 @@ export class MqttProvider {
   public get syncMessageProcesses$() {
     return this.sharedMessagesProcesses;
   }
+
+  private publishSubject = new ReplaySubject<{ topic: TopicEnum; value?: any }>(
+    1
+  );
+
+  publishSubject$ = this.publishSubject.asObservable().pipe(share());
 
   constructor(private appService: AppService) {
     console.info(
@@ -131,7 +133,7 @@ export class MqttProvider {
             if (handshake === HandshakeTypeEnum.DATA) {
               // do stuff with data
               const validatedData = validateMessage(data);
-              if (typeof validatedData === 'number') {
+              if (typeof validatedData === 'string') {
                 // place to get all ledgers and recognize the attacker
                 // validated data is nodeId of attacker
               } else {
@@ -328,6 +330,12 @@ export class MqttProvider {
     if (topic === 'data') {
       this.appService.storeData(data);
     } else if (topic === 'config') {
+      if (data.config_req) {
+        this.publishSubject.next({
+          topic: TopicEnum.CONFIG,
+          value: { nodeId: data.node_id }
+        });
+      }
     } else {
       // can be atacker, can be logged to the db
       console.error('Unsuported topic used');

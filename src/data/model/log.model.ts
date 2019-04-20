@@ -8,3 +8,14 @@ export interface LogModel extends Document {
   status: LogStatusEnum;
   err: string;
 }
+
+export const getLogStateEnumName = (e: LogStateEnum) => {
+  switch (e) {
+    case LogStateEnum.PENDING:
+      return 'Pending';
+    case LogStateEnum.SUCCESSFUL:
+      return 'Successful';
+    default:
+      return 'Errored';
+  }
+};

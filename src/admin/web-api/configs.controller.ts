@@ -20,11 +20,6 @@ import {
 export class ConfigsController {
   constructor(private configsService: ConfigsService) {}
 
-  @Get('')
-  get() {
-    return 'ssdsddsd';
-  }
-
   @Patch('store')
   @HttpCode(200)
   storeConfig(@Body() config: MqttNodeConfigRequest) {
@@ -34,7 +29,6 @@ export class ConfigsController {
   @Post('create')
   @HttpCode(201)
   createConfig(@Body() config: NodeConfig) {
-    console.log(config);
     return this.configsService.createConfig(config);
   }
 

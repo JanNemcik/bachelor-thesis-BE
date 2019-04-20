@@ -52,6 +52,10 @@ export class MqttService {
   //   Array<{ id: string; fn: (message: any) => any }>
   // >();
 
+  get mqttPublishSubject() {
+    return this.mqttProvider.publishSubject$;
+  }
+
   constructor(
     @InjectModel('LogsModel') private readonly logModel: Model<LogModel>,
     private readonly mqttProvider: MqttProvider,
@@ -62,9 +66,6 @@ export class MqttService {
         mergeMap(({ topic, message }) => this.publishMessage(topic, message))
       )
       .subscribe({
-        next: v => {
-          console.log('success', v);
-        },
         error: e => {
           console.error(e);
         }
@@ -207,7 +208,6 @@ export class MqttService {
       ),
       mergeMap((doc: LogModel) =>
         obs2.pipe(
-          tap(v => console.log('second observer', v)),
           timeout(2000),
           catchError(err => {
             // TODO: consider a solution what to do if data is not received

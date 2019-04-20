@@ -1,17 +1,18 @@
-import { createInstance, MQTT_MESSAGE_PSK } from '../shared';
+import { createInstance, transformFromSchemaToModel } from '../shared';
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { DataModel } from '../data';
+import { DataModel, LogModel } from '../data';
 import { of, from, throwError } from 'rxjs';
-import { mergeMap, catchError, map, tap } from 'rxjs/operators';
-import { GatewayService } from './gateway.service';
-import * as crypto_js from 'crypto-js';
+import { mergeMap, catchError, map, take, toArray } from 'rxjs/operators';
+import { LogStatusEnum } from '../data/interfaces';
+import { getLogStateEnumName } from '../data/model';
 
 @Injectable()
 export class AppService {
   constructor(
-    @InjectModel('DataModel') private readonly dataModel: Model<DataModel>
+    @InjectModel('DataModel') private readonly dataModel: Model<DataModel>,
+    @InjectModel('LogsModel') private readonly logsModel: Model<LogModel>
   ) {}
 
   storeData(data: any) {
@@ -28,39 +29,28 @@ export class AppService {
     );
   }
 
-  broadcastData() {}
-
-  /**
-   * Encrypts given message
-   * @param message
-   */
-  encryptMessage(message: string): string {
-    return crypto_js.AES.encrypt(
-      message,
-      MQTT_MESSAGE_PSK,
-      crypto_js.TripleDES
-    ).toString();
+  getLogs() {
+    return from(
+      this.logsModel
+        .find()
+        .lean()
+        .exec()
+    ).pipe(
+      transformFromSchemaToModel(),
+      map((result: any[]) =>
+        result.sort((first, second) => second.timestamp - first.timestamp)
+      ),
+      mergeMap(res => from(res)),
+      map(({ state, status, ...rest }) => ({
+        ...rest,
+        state: getLogStateEnumName(state),
+        status:
+          status &&
+          (status === LogStatusEnum.PUBLISHING ? 'Publishing' : 'Receiving')
+      })),
+      toArray(),
+      take(1),
+      catchError(err => throwError(err))
+    );
   }
-
-  /**
-   * Decryptes given message
-   * @param message
-   */
-  decryptMessage(message: string): string {
-    return crypto_js.AES.decrypt(
-      message,
-      MQTT_MESSAGE_PSK,
-      crypto_js.TripleDES
-    ).toString(crypto_js.enc.Utf8);
-  }
-
-  /**
-   * Return hashed string of length 10
-   * @param toHash
-   */
-  createHashedId = (toHash): string =>
-    crypto_js
-      .SHA256(JSON.stringify(toHash))
-      .toString()
-      .substr(0, 10);
 }

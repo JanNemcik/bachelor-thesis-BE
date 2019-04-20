@@ -1,3 +1,3 @@
-import { AuthSchema } from './auth.schema';
+import { AUTH_SCHEMA } from './auth.schema';
 
-export { AuthSchema };
+export { AUTH_SCHEMA };

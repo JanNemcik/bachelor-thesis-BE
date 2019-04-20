@@ -10,7 +10,15 @@ import {
 } from '../../data/interfaces';
 import { from, Observable, of, throwError } from 'rxjs';
 import * as _ from 'lodash';
-import { take, catchError, mergeMap, map, tap, mapTo } from 'rxjs/operators';
+import {
+  take,
+  catchError,
+  mergeMap,
+  map,
+  tap,
+  mapTo,
+  filter
+} from 'rxjs/operators';
 import {
   transformFromSchemaToModel,
   transformFromModelToSchema
@@ -27,7 +35,16 @@ export class ConfigsService {
     private readonly configsModel: Model<ConfigsModel>,
     private nodesService: NodesService,
     private mqttService: MqttService
-  ) {}
+  ) {
+    this.mqttService.mqttPublishSubject
+      .pipe(filter(publish => publish.topic === TopicEnum.CONFIG))
+      .subscribe({
+        next: ({ topic, value }) => {
+          let data: any;
+          this.mqttService.sendMessageToNetwork(topic, data);
+        }
+      });
+  }
 
   /**
    * Stores config, requested directly from network
@@ -48,7 +65,6 @@ export class ConfigsService {
       ),
       mergeMap(createdConfig =>
         from(createdConfig.save()).pipe(
-          tap(v => console.log('cr', v)),
           mergeMap((confModel: any) =>
             from(
               this.configsModel
@@ -182,7 +198,7 @@ export class ConfigsService {
    * Returns config requested by network
    * @param config requeted config
    */
-  getConfigForNetwork(config: MqttNodeConfigRequest): MqttNodeConfigResponse {
+  getConfigForNetwork(nodeId: string): MqttNodeConfigResponse {
     return;
   }
 }
