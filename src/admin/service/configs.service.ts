@@ -5,11 +5,12 @@ import {
   NodeDeviceTypeEnum,
   MqttNodeConfigRequest,
   NodeConfig,
-  MqttNodeConfigResponse
+  MqttNodeConfigResponse,
+  TopicEnum
 } from '../../data/interfaces';
-import { from, Observable, of, throwError, merge } from 'rxjs';
+import { from, Observable, of, throwError } from 'rxjs';
 import * as _ from 'lodash';
-import { take, catchError, mergeMap, map, toArray, tap } from 'rxjs/operators';
+import { take, catchError, mergeMap, map, tap, mapTo } from 'rxjs/operators';
 import {
   transformFromSchemaToModel,
   transformFromModelToSchema
@@ -17,14 +18,15 @@ import {
 import { ConfigsModel } from '../data';
 import { createInstance } from '../../shared';
 import { NodesService } from './nodes.service';
-import { NodesModel } from '../data/model/node.model';
+import { MqttService } from '../../service/mqtt.service';
 
 @Injectable()
 export class ConfigsService {
   constructor(
     @InjectModel('ConfigsModel')
     private readonly configsModel: Model<ConfigsModel>,
-    private nodesService: NodesService
+    private nodesService: NodesService,
+    private mqttService: MqttService
   ) {}
 
   /**
@@ -59,9 +61,15 @@ export class ConfigsService {
                   { is_current: false }
                 )
                 .exec()
-            ).pipe()
+            ).pipe(mapTo(confModel))
           )
         )
+      ),
+      tap(() =>
+        this.mqttService.sendMessageToNetwork(TopicEnum.CONFIG, {
+          configReq: false,
+          ...config
+        })
       ),
       catchError(err => {
         console.error(err);

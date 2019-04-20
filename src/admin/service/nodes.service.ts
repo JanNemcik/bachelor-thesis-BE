@@ -3,13 +3,13 @@ import { NodeDevice } from '../../data/interfaces';
 import { InjectModel } from '@nestjs/mongoose';
 import { NodesModel } from '../data/model/node.model';
 import { Model } from 'mongoose';
-import { of, from, throwError, Observable } from 'rxjs';
+import { of, from, throwError } from 'rxjs';
 import {
   createInstance,
   transformFromModelToSchema,
   transformFromSchemaToModel
 } from '../../shared';
-import { mergeMap, catchError, map, tap, take } from 'rxjs/operators';
+import { mergeMap, catchError, map, take } from 'rxjs/operators';
 
 @Injectable()
 export class NodesService {

@@ -10,7 +10,9 @@ export const MQTT_CLIENT_OPTIONS: IClientOptions = {
       .substr(2, 8),
   username: 'bachelor',
   password: 'iotbachelor',
-  protocol: 'mqtt'
+  protocol: 'mqtt',
+  protocolId: 'MQTT',
+  host: 'iot-backend.itprof.sk'
 };
 
 export const DATABASE_OPTIONS_LOCAL: MongooseModuleAsyncOptions = {

@@ -1,22 +1,16 @@
 import {
   Controller,
-  UsePipes,
   Get,
   Patch,
   Body,
   HttpCode,
   Delete,
   Param,
-  Req,
   Query,
   Post
 } from '@nestjs/common';
-import { MessagePattern, Client, ClientProxy } from '@nestjs/microservices';
 import { ConfigsService } from '../service/configs.service';
-import { MqttMessageValidationPipe } from '../../config/mqtt-message-validation.pipe';
-import { Observable } from 'rxjs';
 import {
-  PatternEnum,
   NodeDeviceTypeEnum,
   MqttNodeConfigRequest,
   NodeConfig

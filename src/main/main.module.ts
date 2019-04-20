@@ -5,7 +5,7 @@ import { DATA_SCHEMA } from '../data';
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: 'DataModel', schema: DATA_SCHEMA, collection: 'data' }
+      // { name: 'DataModel', schema: DATA_SCHEMA, collection: 'data' }
     ])
   ],
   providers: []

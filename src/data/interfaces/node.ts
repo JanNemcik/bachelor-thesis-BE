@@ -7,9 +7,9 @@ interface NodeDevice {
 
 interface NodeConfig extends NodeDevice {
   /**
-   * format MM:SS
+   * format secs
    */
-  interval: string;
+  interval: number;
 }
 
 interface NodeData extends NodeDevice {

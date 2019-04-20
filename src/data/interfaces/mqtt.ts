@@ -10,6 +10,7 @@ interface MqttNodeConfigResponse extends MqttNodeConfigRequest, NodeConfig {}
 interface MqttSignalingMessage {
   hash: string;
   handshake: HandshakeTypeEnum;
+  clientId: string;
 }
 
 interface MqttMessage<T = any> extends MqttSignalingMessage {

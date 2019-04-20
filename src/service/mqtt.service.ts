@@ -1,5 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { Observable, of, throwError, from, Subject, pipe, EMPTY } from 'rxjs';
+import {
+  Observable,
+  of,
+  throwError,
+  from,
+  Subject,
+  pipe,
+  EMPTY,
+  ReplaySubject
+} from 'rxjs';
 import * as _ from 'lodash';
 import {
   mergeMap,
@@ -9,24 +18,25 @@ import {
   catchError,
   timeout,
   take,
-  mapTo
+  mapTo,
+  tap
 } from 'rxjs/operators';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { LogModel } from '../data';
 import { MqttProvider } from './mqtt.provider';
 import {
-  MqttMessage,
   HandshakeTypeEnum,
-  MqttLogManager
+  MqttLogManager,
+  TopicEnum
 } from '../data/interfaces';
 import { LogStateEnum, LogStatusEnum } from '../data/interfaces/enum/log.enum';
-import { AppService } from './app.service';
-import { storeToDB } from '../shared';
+import { storeToDB, transformFromModelToSchema } from '../shared';
+import { GatewayService } from './gateway.service';
 
 @Injectable()
 export class MqttService {
-  private messagesQueue = new Map<string, MqttMessage>();
+  private messagesSubject = new ReplaySubject(1);
   // TODO: todo below
   // /**
   //  * @key topic: topic, to which are subsribers registred
@@ -45,15 +55,35 @@ export class MqttService {
   constructor(
     @InjectModel('LogsModel') private readonly logModel: Model<LogModel>,
     private readonly mqttProvider: MqttProvider,
-    private appService: AppService
-  ) {}
+    private gatewayService: GatewayService
+  ) {
+    this.messagesSubject
+      .pipe(
+        mergeMap(({ topic, message }) => this.publishMessage(topic, message))
+      )
+      .subscribe({
+        next: () => {
+          console.log('success');
+        },
+        error: e => {
+          console.error(e);
+        }
+      });
+  }
+
+  sendMessageToNetwork(topic: TopicEnum, message: any) {
+    this.messagesSubject.next({ topic, message });
+  }
 
   /**
    *
    * @param topic
    * @param message
    */
-  publishMessage<T = any>(topic: string, message: T): Observable<any> {
+  private publishMessage<T = any>(
+    topic: TopicEnum,
+    message: T
+  ): Observable<any> {
     // mqttProvider starts synchronization proccess with network and handles publishing of data to the network
     let hash: string;
 
@@ -65,12 +95,22 @@ export class MqttService {
 
     const conditionObservable = (condition: (...args) => boolean) =>
       this.mqttProvider.syncMessageProcesses$.pipe(
-        mergeMap(messages => from(messages)),
-        filter(value => condition(value))
+        mergeMap(messages =>
+          from(messages).pipe(
+            filter(value => condition(value)),
+            take(1)
+          )
+        )
       );
 
-    return of(null).pipe(
-      this.mqttProvider.startSyncProcess<T>(topic, message),
+    return of(message).pipe(
+      transformFromModelToSchema(),
+      mergeMap((transformedMessage: any) =>
+        of(null).pipe(
+          this.mqttProvider.startSyncProcess(topic, transformedMessage)
+        )
+      ),
+      // this.mqttProvider.startSyncProcess<T>(topic, message),
       // creates log record
       map(createdHash => {
         hash = createdHash;
@@ -87,7 +127,8 @@ export class MqttService {
       this.retryPublishMechanism(
         conditionObservable(synAckReceived),
         conditionObservable(ackReceived)
-      )
+      ),
+      take(1)
     );
   }
 
@@ -153,10 +194,20 @@ export class MqttService {
         )
       ),
       catchError((errorManager: MqttLogManager) =>
-        this.updateLog(errorManager, LogStateEnum.ERRORED)
+        this.updateLog(errorManager, LogStateEnum.ERRORED).pipe(
+          tap(({ err, topic }) =>
+            this.gatewayService.brodcastData(
+              { message: err, title: 'Config wasn`t uploaded to network' },
+              'server_error'
+            )
+          ),
+          mergeMap(() => EMPTY),
+          take(1)
+        )
       ),
       mergeMap((doc: LogModel) =>
         obs2.pipe(
+          tap(v => console.log('second observer', v)),
           timeout(2000),
           catchError(err => {
             // TODO: consider a solution what to do if data is not received
@@ -171,7 +222,15 @@ export class MqttService {
       ),
       catchError((errorManager: MqttLogManager) =>
         this.updateLog(errorManager, LogStateEnum.ERRORED).pipe(
-          mapTo(LogStateEnum.ERRORED)
+          tap(({ err, topic }) =>
+            this.gatewayService.brodcastData(
+              { message: err, title: 'Config wasn`t uploaded to network' },
+              'server_error'
+            )
+          ),
+          mapTo(LogStateEnum.ERRORED),
+          mergeMap(() => EMPTY),
+          take(1)
         )
       )
     );

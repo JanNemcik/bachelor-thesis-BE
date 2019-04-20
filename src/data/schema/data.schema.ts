@@ -4,7 +4,7 @@ import { NodeDeviceTypeEnum, AirSensorQualityEnum } from '../interfaces';
 
 export const DATA_SCHEMA = new Schema({
   node_id: Number,
-  timestamp: { type: Date, default: Date.now },
+  timestamp: { type: Number, default: Date.now() },
   node_type: { type: String, enum: _.values(NodeDeviceTypeEnum) },
   air_quality: {
     type: String,
