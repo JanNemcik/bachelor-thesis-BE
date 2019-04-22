@@ -9,10 +9,10 @@ import { map } from 'rxjs/operators';
 
 @WebSocketGateway()
 export class EventsGateway {
-  @WebSocketServer() server;
+  @WebSocketServer() private socketServer;
 
   emit<T = any>(data: T, messageIdentity: string) {
-    this.server.emit(messageIdentity, data);
+    this.socketServer.emit(messageIdentity, data);
   }
 
   @SubscribeMessage('events')
