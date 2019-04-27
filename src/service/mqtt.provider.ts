@@ -115,12 +115,6 @@ export class MqttProvider {
               case HandshakeTypeEnum.SYN_ACK:
                 this.handleIncomingSynAck(decryptedMessage.hash, topic);
                 break;
-              case HandshakeTypeEnum.SYN:
-                this.confirmSyn(
-                  decryptedMessage as MqttSignalingMessage,
-                  topic
-                );
-                break;
               case HandshakeTypeEnum.ACK:
                 this.handleIncomingAck(decryptedMessage.hash);
                 break;
