@@ -148,7 +148,7 @@ export class MqttProvider {
           }
         }
       } catch (e) {
-        console.error(e);
+        console.error(e, ' | ', new Date().toLocaleTimeString());
       }
     });
   }
@@ -338,7 +338,11 @@ export class MqttProvider {
       }
     } else {
       // can be atacker, can be logged to the db
-      console.error('Unsuported topic used');
+      console.error(
+        'Unsuported topic used',
+        ' | ',
+        new Date().toLocaleTimeString()
+      );
     }
   }
 }

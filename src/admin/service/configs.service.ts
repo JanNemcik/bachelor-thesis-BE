@@ -89,7 +89,7 @@ export class ConfigsService {
         })
       ),
       catchError(err => {
-        console.error(err);
+        console.error(err, ' | ', new Date().toLocaleTimeString());
         return throwError(new BadRequestException(err));
       })
     );
@@ -129,7 +129,7 @@ export class ConfigsService {
         });
       }),
       catchError(err => {
-        console.error(err);
+        console.error(err, ' | ', new Date().toLocaleTimeString());
         return throwError(new BadRequestException(err));
       })
     );

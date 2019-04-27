@@ -79,7 +79,7 @@ export class AuthService {
       .then((foundUser: AuthenticationDataDto) =>
         compare(password, foundUser.password)
       )
-      .catch(err => console.error(err));
+      .catch(err => console.error(err, ' | ', new Date().toLocaleTimeString()));
     return from(this.authModel.findOne({ name }).exec(), asyncScheduler)
       .pipe(
         mergeMap((foundUser: AuthenticationDataDto) =>

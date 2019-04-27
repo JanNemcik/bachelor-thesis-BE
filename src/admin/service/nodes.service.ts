@@ -28,7 +28,8 @@ export class NodesService {
       mergeMap(createdConfig => from(createdConfig.save())),
       catchError(
         err =>
-          (() => console.error(err)) && throwError(new BadRequestException(err))
+          (() => console.error(err, ' | ', new Date().toLocaleTimeString())) &&
+          throwError(new BadRequestException(err))
       )
     );
   }
@@ -38,7 +39,8 @@ export class NodesService {
       map(status => status.ok),
       catchError(
         err =>
-          (() => console.error(err)) && throwError(new BadRequestException(err))
+          (() => console.error(err, ' | ', new Date().toLocaleTimeString())) &&
+          throwError(new BadRequestException(err))
       )
     );
   }
