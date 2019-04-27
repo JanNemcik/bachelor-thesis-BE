@@ -95,7 +95,7 @@ export class MqttService {
       item.hash === hash && item.state === HandshakeTypeEnum.ACK;
 
     const conditionObservable = (condition: (...args) => boolean) =>
-      this.mqttProvider.syncMessageProcesses$.pipe(
+      this.mqttProvider.syncMessageProcessing$.pipe(
         mergeMap(messages =>
           from(messages).pipe(
             filter(value => condition(value)),

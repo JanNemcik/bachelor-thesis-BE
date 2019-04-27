@@ -36,11 +36,11 @@ export class MqttProvider {
   // stores currently processing messages
   private processingMessages: Map<string, MqttData> = new Map();
   // subject for network synchronization handling
-  private _syncMessageProcesses$ = new BehaviorSubject<
+  private _syncMessageProcessing$ = new BehaviorSubject<
     Array<{ hash: string; state: HandshakeTypeEnum }>
   >([]);
 
-  private sharedMessagesProcesses = this._syncMessageProcesses$
+  private sharedMessagesProcessing = this._syncMessageProcessing$
     .asObservable()
     .pipe(share());
 
@@ -50,15 +50,15 @@ export class MqttProvider {
     state: HandshakeTypeEnum;
   }>;
 
-  public get syncMessageProcesses$() {
-    return this.sharedMessagesProcesses;
+  public get syncMessageProcessing$() {
+    return this.sharedMessagesProcessing;
   }
 
   private publishSubject = new ReplaySubject<{ topic: TopicEnum; value?: any }>(
     1
   );
 
-  publishSubject$ = this.publishSubject.asObservable().pipe(share());
+  public publishSubject$ = this.publishSubject.asObservable().pipe(share());
 
   constructor(private appService: AppService) {
     console.info(
@@ -73,17 +73,7 @@ export class MqttProvider {
     this._client.on('connect', () => {
       this.init();
     });
-    this.processingMessagesValue = this._syncMessageProcesses$.value;
-  }
-
-  /**
-   *
-   *
-   * @returns {mqtt.Client}
-   * @memberof MqttProvider
-   */
-  getClientProviderInstance(): mqtt.Client {
-    return this._client;
+    this.processingMessagesValue = this._syncMessageProcessing$.value;
   }
 
   /**
@@ -196,7 +186,7 @@ export class MqttProvider {
     this._client.publish(topic, encrypted);
 
     this.processingMessages.set(hash, encrypted);
-    this._syncMessageProcesses$.next([
+    this._syncMessageProcessing$.next([
       ...this.processingMessagesValue,
       { hash, state: HandshakeTypeEnum.SYN }
     ]);
@@ -223,7 +213,7 @@ export class MqttProvider {
    */
   private confirmSyn({ hash }: MqttSignalingMessage, topic: TopicEnum) {
     // TODO: need to handle failure at network layer, if there is now ack confirmation of received data
-    this._syncMessageProcesses$.next([
+    this._syncMessageProcessing$.next([
       ...this.processingMessagesValue,
       { hash, state: HandshakeTypeEnum.SYN_ACK }
     ]);
@@ -300,7 +290,7 @@ export class MqttProvider {
     const newValue = this.processingMessagesValue.filter(
       ({ hash }) => hash !== toChange
     );
-    this._syncMessageProcesses$.next([
+    this._syncMessageProcessing$.next([
       ...newValue,
       { hash: toChange, state: newState }
     ]);
@@ -311,7 +301,7 @@ export class MqttProvider {
     this.processingMessagesValue = this.processingMessagesValue.filter(
       ({ hash }) => hash !== toRemove
     );
-    this._syncMessageProcesses$.next(this.processingMessagesValue);
+    this._syncMessageProcessing$.next(this.processingMessagesValue);
   }
 
   repeatSyncProcess(topic: TopicEnum, hash: string) {
