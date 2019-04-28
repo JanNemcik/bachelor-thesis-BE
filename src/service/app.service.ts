@@ -18,6 +18,7 @@ export class AppService {
   ) {}
 
   storeData(data: any) {
+    console.log('data', data);
     return of(createInstance<DataModel>(this.dataModel, data)).pipe(
       mergeMap(createdDocument => from(createdDocument.save())),
       // doing some transformation with the data and error handling
@@ -25,6 +26,14 @@ export class AppService {
         if (!!!storedData) {
           throw new BadRequestException(`Data wasn't stored properly`);
         } else {
+          console.log('broadcasting', data);
+          const { node_id, node_type, timestamp, ...rest } = data;
+          data = {
+            nodeId: node_id,
+            type: node_type,
+            timestamp,
+            value: { ...rest }
+          };
           this.gatewayService.brodcastData(data, 'data');
         }
       }),

@@ -11,7 +11,7 @@ import {
   PublisherEnum
 } from '../data/interfaces';
 import { pipe, BehaviorSubject, of, ReplaySubject } from 'rxjs';
-import { map, share, take } from 'rxjs/operators';
+import { map, share, take, mergeMap } from 'rxjs/operators';
 import { AppService } from './app.service';
 import {
   encryptMessage,
@@ -156,6 +156,16 @@ export class MqttProvider {
         }
       } catch (e) {
         console.error(e, ' | ', new Date().toLocaleTimeString());
+        const parsed = JSON.parse(receivedMessage);
+        const { id, publisher, type, ...data } = parsed;
+        const toStore = { node_id: id, node_type: type, ...data };
+
+        of(toStore)
+          .pipe(
+            mergeMap(d => this.appService.storeData(d)),
+            take(1)
+          )
+          .subscribe();
       }
     });
   }
