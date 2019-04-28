@@ -1,4 +1,6 @@
 export enum TopicEnum {
   CONFIG = 'config',
-  DATA = 'data'
+  DATA = 'data',
+  ATTACKER = 'attacker',
+  LEDGER = 'ledger'
 }

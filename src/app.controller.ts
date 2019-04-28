@@ -10,4 +10,10 @@ export class AppController {
   getLogs() {
     return this.appService.getLogs();
   }
+
+  @Get('data')
+  @HttpCode(200)
+  getData() {
+    return this.appService.getData();
+  }
 }

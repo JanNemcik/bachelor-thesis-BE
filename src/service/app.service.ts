@@ -4,26 +4,29 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DataModel, LogModel } from '../data';
 import { of, from, throwError } from 'rxjs';
-import { mergeMap, catchError, map, take, toArray } from 'rxjs/operators';
+import { mergeMap, catchError, map, take, toArray, tap } from 'rxjs/operators';
 import { LogStatusEnum } from '../data/interfaces';
 import { getLogStateEnumName } from '../data/model';
+import { GatewayService } from './gateway.service';
 
 @Injectable()
 export class AppService {
   constructor(
     @InjectModel('DataModel') private readonly dataModel: Model<DataModel>,
-    @InjectModel('LogsModel') private readonly logsModel: Model<LogModel>
+    @InjectModel('LogsModel') private readonly logModel: Model<LogModel>,
+    private gatewayService: GatewayService
   ) {}
 
   storeData(data: any) {
     return of(createInstance<DataModel>(this.dataModel, data)).pipe(
       mergeMap(createdDocument => from(createdDocument.save())),
       // doing some transformation with the data and error handling
-      map(storedData => {
+      tap(storedData => {
         if (!!!storedData) {
           throw new BadRequestException(`Data wasn't stored properly`);
+        } else {
+          this.gatewayService.brodcastData(data, 'data');
         }
-        return storedData;
       }),
       catchError(err => throwError(err))
     );
@@ -31,7 +34,7 @@ export class AppService {
 
   getLogs() {
     return from(
-      this.logsModel
+      this.logModel
         .find()
         .lean()
         .exec()
@@ -51,6 +54,37 @@ export class AppService {
       toArray(),
       take(1),
       catchError(err => throwError(err))
+    );
+  }
+
+  logAttacker(nodeId: string) {}
+
+  getData() {
+    // db.collection.aggregate([
+    //   { "$sort": { "user": 1, "_id": -1 } },
+    //   {
+    //     "$group": {
+    //       "_id": "$user",
+    //       "user": { "$last": "$$ROOT" }
+    //     }
+    //   }
+    // ])
+    return of(
+      this.dataModel
+        .aggregate()
+        .sort({ timestamp: 'desc' })
+        .group({
+          node_id: '$node_id',
+          timestamp: { $last: '$$ROOT' }
+        })
+        .exec()
+    ).pipe(
+      transformFromSchemaToModel(),
+      take(1),
+      catchError(err => {
+        console.error(err, new Date().toLocaleTimeString());
+        return of(null);
+      })
     );
   }
 }

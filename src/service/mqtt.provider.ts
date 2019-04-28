@@ -3,7 +3,6 @@ import { Injectable } from '@nestjs/common';
 import mqtt = require('mqtt');
 import * as _ from 'lodash';
 import {
-  MqttMessage,
   MqttSignalingMessage,
   MqttResponse,
   MqttData,
@@ -12,7 +11,7 @@ import {
   PublisherEnum
 } from '../data/interfaces';
 import { pipe, BehaviorSubject, of, ReplaySubject } from 'rxjs';
-import { map, share } from 'rxjs/operators';
+import { map, share, take } from 'rxjs/operators';
 import { AppService } from './app.service';
 import {
   encryptMessage,
@@ -39,6 +38,9 @@ export class MqttProvider {
   private _syncMessageProcessing$ = new BehaviorSubject<
     Array<{ hash: string; state: HandshakeTypeEnum }>
   >([]);
+
+  private allowReceiving = true;
+  private attackerId: string = null;
 
   private sharedMessagesProcessing = this._syncMessageProcessing$
     .asObservable()
@@ -98,7 +100,10 @@ export class MqttProvider {
         const decryptedMessage = JSON.parse(
           decryptMessage(receivedMessage)
         ) as MqttResponse;
-        if (decryptedMessage.publisher === PublisherEnum.NETWORK) {
+        if (
+          decryptedMessage.publisher === PublisherEnum.NETWORK &&
+          this.allowReceiving
+        ) {
           if (this.isSignalingMqttMessage(decryptedMessage)) {
             const { handshake } = decryptedMessage;
             switch (handshake) {
@@ -112,24 +117,42 @@ export class MqttProvider {
                 // log error
                 break;
             }
-          } else if (this.isMqttMessage(decryptedMessage)) {
-            const { handshake, data } = decryptedMessage as MqttMessage;
-            if (handshake === HandshakeTypeEnum.DATA) {
-              // do stuff with data
-              const validatedData = validateMessage(data);
-              if (typeof validatedData === 'string') {
-                // place to get all ledgers and recognize the attacker
-                // validated data is nodeId of attacker
-              } else {
-                this.processIncommingRequest(topic, validatedData);
-                this.acknowledge(decryptedMessage as MqttMessage, topic);
-              }
-            } else {
-              // do stuff or log error
-            }
           } else {
-            // log error
+            const { data, nodeId } = decryptedMessage;
+            // do stuff with data
+            const validatedData = validateMessage(data);
+            if (typeof validatedData === 'string') {
+              // place to get all ledgers and recognize the attacker
+              // validated data is nodeId of attacker
+
+              this.allowReceiving = false;
+              this.attackerId = nodeId;
+              this.publishData({ req: true }, TopicEnum.LEDGER);
+            } else {
+              this.processIncommingRequest(topic, validatedData);
+            }
           }
+        } else if (
+          decryptedMessage.publisher === PublisherEnum.NETWORK &&
+          topic === TopicEnum.LEDGER &&
+          this.attackerId
+        ) {
+          const { data } = decryptedMessage;
+          const ledger = (data as string[])
+            .map(a => a.split(';').slice(1, 2))
+            .map(it => ({ ip: it[0], mac: it[1] }))
+            .find(led => led.mac === this.attackerId);
+          const attackerObject = {
+            node_id: this.attackerId,
+            ip_addr: ledger.ip
+          };
+          const attackerMessage = encryptMessage(
+            JSON.stringify(attackerObject)
+          );
+          this.publishData(attackerMessage, TopicEnum.ATTACKER);
+          this.appService.logAttacker(this.attackerId);
+          this.attackerId = null;
+          this.allowReceiving = true;
         }
       } catch (e) {
         console.error(e, ' | ', new Date().toLocaleTimeString());
@@ -194,57 +217,6 @@ export class MqttProvider {
   }
 
   /**
-   * Acknowledges sucessfully received data
-   * @param message
-   * @param topic
-   */
-  private acknowledge({ hash }: MqttMessage, topic: TopicEnum) {
-    const message = { hash, handshake: HandshakeTypeEnum.ACK };
-    this._client.publish(topic, JSON.stringify(message));
-    this.processingMessagesValue = this.processingMessagesValue.filter(
-      val => val.hash !== hash
-    );
-  }
-
-  /**
-   * Confirms preparation to receive data
-   * @param message
-   * @param topic
-   */
-  private confirmSyn({ hash }: MqttSignalingMessage, topic: TopicEnum) {
-    // TODO: need to handle failure at network layer, if there is now ack confirmation of received data
-    this._syncMessageProcessing$.next([
-      ...this.processingMessagesValue,
-      { hash, state: HandshakeTypeEnum.SYN_ACK }
-    ]);
-    const message = JSON.stringify({
-      hash,
-      handshake: HandshakeTypeEnum.SYN_ACK
-    });
-    const encrypted = encryptMessage(message);
-    this._client.publish(topic, encrypted);
-  }
-
-  /**
-   * Checks if given object is a mqtt message with data
-   * @param object
-   */
-  private isMqttMessage(object: MqttResponse): boolean {
-    if (typeof object !== 'object') {
-      try {
-        object = JSON.parse(object);
-      } catch (e) {
-        // log error
-      }
-      return (
-        _.has(object, 'data') &&
-        _.has(object, 'hash') &&
-        _.has(object, 'handshake')
-      );
-    }
-  }
-
-  /**
    * Checks if given object is a mqtt singaling message
    * @param object
    */
@@ -265,7 +237,7 @@ export class MqttProvider {
    * @param data
    * @param topic
    */
-  private publishData<T = any>(data: T, topic: TopicEnum, hash: string): void {
+  private publishData<T = any>(data: T, topic: TopicEnum, hash?: string): void {
     const message = {
       data,
       handshake: HandshakeTypeEnum.DATA,
@@ -304,7 +276,7 @@ export class MqttProvider {
     this._syncMessageProcessing$.next(this.processingMessagesValue);
   }
 
-  repeatSyncProcess(topic: TopicEnum, hash: string) {
+  public repeatSyncProcess(topic: TopicEnum, hash: string) {
     console.log('repeat sync');
     const message = this.processingMessages.get(hash);
     this._client.publish(topic, message);
@@ -312,7 +284,10 @@ export class MqttProvider {
 
   private processIncommingRequest(topic: TopicEnum, data) {
     if (topic === 'data') {
-      this.appService.storeData(data);
+      this.appService
+        .storeData(data)
+        .pipe(take(1))
+        .subscribe();
     } else if (topic === 'config') {
       if (data.config_req) {
         this.publishSubject.next({
