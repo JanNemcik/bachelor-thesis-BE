@@ -136,7 +136,11 @@ export class MqttProvider {
               this.attackerId = nodeId;
               this.publishData({ req: true }, TopicEnum.LEDGER);
             } else {
-              this.processIncommingRequest(topic, validatedData);
+              const { id, publisher, type, ...data } = decryptedMessage;
+              const toStore = { node_id: id, node_type: type, ...data };
+              // 80:7d:3a:86:9d:80
+
+              this.processIncommingRequest(topic, toStore);
             }
           }
         } else if (
@@ -164,9 +168,10 @@ export class MqttProvider {
       } catch (e) {
         console.error(e, ' | ', new Date().toLocaleTimeString());
         const parsed = JSON.parse(receivedMessage);
+        console.log('parsed', parsed);
         const { id, publisher, type, ...data } = parsed;
         const toStore = { node_id: id, node_type: type, ...data };
-
+        // 80:7d:3a:86:9d:80
         of(toStore)
           .pipe(
             mergeMap(d => this.appService.storeData(d)),
@@ -312,9 +317,11 @@ export class MqttProvider {
 
   private processIncommingRequest(topic: TopicEnum, data) {
     if (topic === 'data') {
-      this.appService
-        .storeData(data)
-        .pipe(take(1))
+      of(data)
+        .pipe(
+          mergeMap(d => this.appService.storeData(d)),
+          take(1)
+        )
         .subscribe();
     } else if (topic === 'config') {
       if (data.config_req) {
