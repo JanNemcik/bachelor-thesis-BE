@@ -62,6 +62,9 @@ export class MqttProvider {
 
   public publishSubject$ = this.publishSubject.asObservable().pipe(share());
 
+  private startTime;
+  private endTime;
+
   constructor(private appService: AppService) {
     console.info(
       '[MQTT Provider] - ',
@@ -83,6 +86,8 @@ export class MqttProvider {
    */
   startSyncProcess(topic: TopicEnum, data: any) {
     // send {type: syn} to the network
+    this.startTime = Date.now();
+    console.log('start', this.startTime);
     return pipe(map(() => this.sendSyn(data, topic)));
   }
 
@@ -95,11 +100,13 @@ export class MqttProvider {
   private init() {
     this._client.subscribe('#').on('message', (topic: TopicEnum, message) => {
       const receivedMessage = message.toString();
+      console.log('received', receivedMessage);
       // when a message arrives, do something with it
       try {
-        const decryptedMessage = JSON.parse(
-          decryptMessage(receivedMessage)
-        ) as MqttResponse;
+        // const decryptedMessage = JSON.parse(
+        //   decryptMessage(receivedMessage)
+        // ) as MqttResponse;
+        const decryptedMessage = JSON.parse(receivedMessage);
         if (
           decryptedMessage.publisher === PublisherEnum.NETWORK &&
           this.allowReceiving
@@ -183,6 +190,15 @@ export class MqttProvider {
     this.changeState(hash, HandshakeTypeEnum.ACK);
     // then remove without emiting
     this.removeFromProcessingMessagesSubject(hash);
+    this.endTime = Date.now();
+
+    console.log('end', this.endTime, 'diff: ', this.endTime - this.startTime);
+    const fs = require('fs');
+
+    fs.appendFileSync(
+      '/home/jany/projects/bachelor-thesis/testing.txt',
+      `${this.endTime - this.startTime}, `
+    );
   }
 
   /**
@@ -214,8 +230,9 @@ export class MqttProvider {
       publisher: PublisherEnum.SERVER
     };
 
-    const encrypted = encryptMessage(JSON.stringify(message));
+    //const encrypted = encryptMessage(JSON.stringify(message));
 
+    const encrypted = JSON.stringify(message);
     this._client.publish(topic, encrypted);
 
     this.processingMessages.set(hash, encrypted);
@@ -254,7 +271,8 @@ export class MqttProvider {
       hash,
       publisher: PublisherEnum.SERVER
     };
-    const encrypted = encryptMessage(JSON.stringify(message));
+    // const encrypted = encryptMessage(JSON.stringify(message));
+    const encrypted = JSON.stringify(message);
     this.processingMessages.set(hash, encrypted);
     this._client.publish(topic, encrypted);
     this.changeState(hash, HandshakeTypeEnum.DATA);
