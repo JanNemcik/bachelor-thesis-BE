@@ -122,10 +122,8 @@ export class ConfigsService {
       ),
       tap(({ node_id, interval, node_type }) => {
         this.mqttService.sendMessageToNetwork(TopicEnum.CONFIG, {
-          configReq: false,
-          node_id,
-          interval,
-          node_type
+          id: node_id,
+          interval
         });
       }),
       catchError(err => {

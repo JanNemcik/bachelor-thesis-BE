@@ -87,6 +87,7 @@ export class MqttProvider {
   startSyncProcess(topic: TopicEnum, data: any) {
     // send {type: syn} to the network
     this.startTime = Date.now();
+    console.log('start syn process', data);
     console.log('start', this.startTime);
     return pipe(map(() => this.sendSyn(data, topic)));
   }
@@ -200,10 +201,10 @@ export class MqttProvider {
     console.log('end', this.endTime, 'diff: ', this.endTime - this.startTime);
     const fs = require('fs');
 
-    fs.appendFileSync(
-      '/home/jany/projects/bachelor-thesis/testing.txt',
-      `${this.endTime - this.startTime}, `
-    );
+    // fs.appendFileSync(
+    //   '/home/jany/projects/bachelor-thesis/testing.txt',
+    //   `${this.endTime - this.startTime}, `
+    // );
   }
 
   /**
@@ -217,6 +218,7 @@ export class MqttProvider {
   private handleIncomingSynAck(hash: string, topic: TopicEnum) {
     this.changeState(hash, HandshakeTypeEnum.SYN_ACK);
     const data = this.processingMessages.get(hash);
+    console.log(data);
 
     this.publishData(data, topic, hash);
   }
@@ -240,7 +242,7 @@ export class MqttProvider {
     const encrypted = JSON.stringify(message);
     this._client.publish(topic, encrypted);
 
-    this.processingMessages.set(hash, encrypted);
+    this.processingMessages.set(hash, data);
     this._syncMessageProcessing$.next([
       ...this.processingMessagesValue,
       { hash, state: HandshakeTypeEnum.SYN }

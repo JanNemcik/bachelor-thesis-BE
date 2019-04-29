@@ -105,7 +105,6 @@ export class MqttService {
       );
 
     return of(message).pipe(
-      transformFromModelToSchema(),
       mergeMap((transformedMessage: any) =>
         of(null).pipe(
           this.mqttProvider.startSyncProcess(topic, transformedMessage)
