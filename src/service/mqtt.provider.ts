@@ -168,17 +168,6 @@ export class MqttProvider {
         }
       } catch (e) {
         console.error(e, ' | ', new Date().toLocaleTimeString());
-        const parsed = JSON.parse(receivedMessage);
-        console.log('parsed', parsed);
-        const { id, publisher, type, ...data } = parsed;
-        const toStore = { node_id: id, node_type: type, ...data };
-        // 80:7d:3a:86:9d:80
-        of(toStore)
-          .pipe(
-            mergeMap(d => this.appService.storeData(d)),
-            take(1)
-          )
-          .subscribe();
       }
     });
   }
@@ -218,7 +207,6 @@ export class MqttProvider {
   private handleIncomingSynAck(hash: string, topic: TopicEnum) {
     this.changeState(hash, HandshakeTypeEnum.SYN_ACK);
     const data = this.processingMessages.get(hash);
-    console.log(data);
 
     this.publishData(data, topic, hash);
   }
@@ -278,6 +266,7 @@ export class MqttProvider {
       hash,
       publisher: PublisherEnum.SERVER
     };
+    console.log('message', message);
     // const encrypted = encryptMessage(JSON.stringify(message));
     const encrypted = JSON.stringify(message);
     this.processingMessages.set(hash, encrypted);

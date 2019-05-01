@@ -12,7 +12,7 @@ export const MQTT_CLIENT_OPTIONS: IClientOptions = {
   password: 'iotbachelor',
   protocol: 'mqtt',
   protocolId: 'MQTT',
-  host: 'iot-backend.itprof.sk',
+  host: '104.248.18.71',
   connectTimeout: 2147483647
 };
 
@@ -30,19 +30,8 @@ export const DATABASE_OPTIONS_PROD: MongooseModuleAsyncOptions = {
 
 export const DATABASE_OPTIONS_DEV: MongooseModuleAsyncOptions = {
   useFactory: () => ({
-    uri: 'mongodb://iot.itprof.sk:27017/bachelor-iot'
+    uri: 'mongodb://104.248.18.71:27017/bachelor-iot'
   })
 };
 
 export const MQTT_MESSAGE_PSK = 'afoj';
-
-export const MQTT_CLIENT_OPTIONS_DEV = {
-  port: 18077,
-  clientId:
-    'mqttjs_' +
-    Math.random()
-      .toString(16)
-      .substr(2, 8),
-  username: 'jgefllim',
-  password: '6_h0zInyHEEg'
-};

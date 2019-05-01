@@ -6,7 +6,7 @@ import { ResponseTransformInterceptor } from './config/response-transform.interc
 import { AuthModule } from './auth';
 import { AdminModule } from './admin/admin.module';
 import { MainModule } from './main/main.module';
-import { DATABASE_OPTIONS_LOCAL } from './shared';
+import { DATABASE_OPTIONS_LOCAL, DATABASE_OPTIONS_DEV } from './shared';
 import { SharedModule } from './shared/shared.module';
 import { DatabaseModule } from './database/database.module';
 
@@ -15,7 +15,7 @@ import mongoose = require('mongoose');
 mongoose.set('debug', true);
 @Module({
   imports: [
-    MongooseModule.forRootAsync(DATABASE_OPTIONS_LOCAL),
+    MongooseModule.forRootAsync(DATABASE_OPTIONS_DEV),
     AuthModule,
     AdminModule,
     MainModule,

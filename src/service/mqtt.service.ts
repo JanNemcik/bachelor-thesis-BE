@@ -183,8 +183,9 @@ export class MqttService {
     pipe(
       mergeMap((doc: LogModel) =>
         obs1.pipe(
-          timeout(2000),
+          timeout(3000),
           catchError(err => {
+            console.log('1vy sync');
             this.mqttProvider.repeatSyncProcess(doc.topic, doc.hash);
             return throwError({ err, doc });
           }),
@@ -207,9 +208,10 @@ export class MqttService {
       ),
       mergeMap((doc: LogModel) =>
         obs2.pipe(
-          timeout(2000),
+          timeout(3000),
           catchError(err => {
             // TODO: consider a solution what to do if data is not received
+            console.log('2hy sync');
             this.mqttProvider.repeatSyncProcess(doc.topic, doc.hash);
             return throwError({ err, doc });
           }),
